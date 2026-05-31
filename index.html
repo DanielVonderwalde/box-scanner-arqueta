@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Box Scanner — Cotizador Arqueta</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- OpenCV.js for precise measurement -->
+<script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady()"></script>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d2e;
+  --surface2: #252840;
+  --accent: #6c63ff;
+  --accent2: #ff6b6b;
+  --green: #43e97b;
+  --text: #e8eaf6;
+  --muted: #7c7f9e;
+  --border: #2e3150;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+/* HEADER */
+.header { background: linear-gradient(135deg, #1a1d2e 0%, #252840 100%); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--muted); line-height: 1.3; }
+.logo span { display: block; font-size: 9px; color: var(--accent); }
+.header-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.header-title small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+/* LAYOUT */
+.app { max-width: 900px; margin: 0 auto; padding: 20px; display: grid; gap: 16px; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+.card-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.card-title .badge { background: var(--accent); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; }
+.card-title .badge-green { background: var(--green); color: #0f1117; }
+
+/* API KEY */
+.api-row { display: flex; gap: 8px; }
+.api-row input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px; }
+.api-row input:focus { outline: none; border-color: var(--accent); }
+.api-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.api-hint a { color: var(--accent); text-decoration: none; }
+.api-saved { color: var(--green); font-size: 11px; margin-top: 4px; display: none; }
+
+/* PHOTO ZONE */
+.photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.photo-zone { position: relative; background: var(--surface2); border: 2px dashed var(--border); border-radius: var(--radius); min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color .2s; }
+.photo-zone:hover { border-color: var(--accent); }
+.photo-zone.has-photo { border-style: solid; border-color: var(--accent); }
+.photo-zone img { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; }
+.photo-zone canvas { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; pointer-events: none; }
+.photo-zone .placeholder { text-align: center; color: var(--muted); font-size: 13px; pointer-events: none; z-index: 1; }
+.photo-zone .placeholder .icon { font-size: 32px; margin-bottom: 8px; }
+.photo-zone .overlay-btn { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,.7); border: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; z-index: 2; }
+.photo-zone .overlay-btn:hover { background: var(--accent); }
+input[type=file] { display: none; }
+
+/* CV RESULT OVERLAY */
+.cv-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+
+/* DIM INPUTS */
+.dim-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.dim-group { display: flex; flex-direction: column; gap: 4px; }
+.dim-group label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.dim-group input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; font-weight: 600; text-align: center; width: 100%; }
+.dim-group input:focus { outline: none; border-color: var(--accent); }
+.dim-group input.cv-detected { border-color: var(--green); background: rgba(67,233,123,.07); }
+
+/* SELECTORS */
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.pill:hover { border-color: var(--accent); }
+.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.pill.active-green { background: var(--green); border-color: var(--green); color: #0f1117; font-weight: 600; }
+
+/* BUTTONS */
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { padding: 11px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #5a52e0; }
+.btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { border-color: var(--accent); }
+.btn-green { background: var(--green); color: #0f1117; }
+.btn-green:hover { background: #36c968; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* DETECTION RESULTS */
+.result-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.result-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+.result-box .label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+.result-box .value { font-size: 20px; font-weight: 700; color: var(--accent); }
+.result-box .unit { font-size: 11px; color: var(--muted); }
+.result-box.cv-source { border-color: var(--green); }
+.result-box.cv-source .value { color: var(--green); }
+
+/* CV STATUS */
+.cv-status { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
+.cv-status.ready { background: rgba(67,233,123,.1); border: 1px solid rgba(67,233,123,.3); color: var(--green); }
+.cv-status.loading { background: rgba(108,99,255,.1); border: 1px solid rgba(108,99,255,.3); color: var(--accent); }
+.cv-status.error { background: rgba(255,107,107,.1); border: 1px solid rgba(255,107,107,.3); color: var(--accent2); }
+.cv-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.cv-dot.pulse { animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+/* ADVANCED */
+.advanced-section { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px; display: none; }
+.advanced-section.open { display: block; }
+.adv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.adv-group h4 { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.adv-field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+.adv-field label { font-size: 11px; color: var(--muted); }
+.adv-field input, .adv-field select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; color: var(--text); font-size: 12px; }
+.adv-field input:focus, .adv-field select:focus { outline: none; border-color: var(--accent); }
+.adv-toggle { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.adv-toggle:hover { color: var(--text); }
+
+/* SVG DIELINE */
+.dieline-wrap { background: #fff; border-radius: var(--radius); overflow: hidden; }
+.dieline-wrap svg { display: block; width: 100%; height: auto; }
+
+/* LOADING / ERROR */
+.loading-bar { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(108,99,255,.1); border: 1px solid rgba(108,99,255,.3); border-radius: 8px; color: var(--accent); font-size: 13px; }
+.loading-bar.show { display: flex; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(108,99,255,.3); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box { display: none; padding: 12px 16px; background: rgba(255,107,107,.1); border: 1px solid rgba(255,107,107,.3); border-radius: 8px; color: var(--accent2); font-size: 13px; }
+.error-box.show { display: block; }
+
+/* MEASUREMENT DETAIL */
+.cv-detail { font-size: 11px; color: var(--muted); margin-top: 6px; padding: 8px 12px; background: var(--surface2); border-radius: 6px; line-height: 1.6; }
+.cv-detail b { color: var(--green); }
+
+@media(max-width:600px){
+  .photo-grid { grid-template-columns: 1fr; }
+  .result-row { grid-template-columns: 1fr 1fr; }
+  .adv-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">ARQUETA FOLDING<span>ARTE EMPACADO</span></div>
+  <div class="header-title">📐 Box Scanner<small>Foto + medidas → troquel → PDF profesional</small></div>
+</div>
+
+<div class="app">
+
+  <!-- API KEY -->
+  <div class="card">
+    <div class="card-title">🔑 OpenRouter API Key</div>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-or-v1-..." oninput="onKeyInput()">
+      <button class="btn btn-secondary" onclick="saveKey()">Guardar</button>
+    </div>
+    <div class="api-hint">Gratis en <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> — sin tarjeta de crédito</div>
+    <div class="api-saved" id="apiSaved">✓ API key guardada</div>
+  </div>
+
+  <!-- PHOTO + CV STATUS -->
+  <div class="card">
+    <div class="card-title">📐 Foto + Medidas exactas <span class="badge badge-green" id="cvBadge">OpenCV</span></div>
+
+    <div id="cvStatus" class="cv-status loading">
+      <div class="cv-dot pulse"></div>
+      <span>Cargando OpenCV.js para medición precisa…</span>
+    </div>
+
+    <div class="photo-grid">
+      <!-- PHOTO UPLOAD -->
+      <div>
+        <div class="photo-zone" id="photoZone" onclick="document.getElementById('fileInput').click()">
+          <div class="placeholder" id="photoPlaceholder">
+            <div class="icon">📷</div>
+            <div>Foto de la caja<br><small style="font-size:11px;color:var(--muted)">(detecta tipo y medidas)</small></div>
+          </div>
+          <img id="photoImg" style="display:none">
+          <canvas id="cvCanvas" style="display:none"></canvas>
+          <svg class="cv-overlay" id="cvOverlay" style="display:none"></svg>
+          <button class="overlay-btn" id="changeBtn" style="display:none" onclick="event.stopPropagation();document.getElementById('fileInput').click()">📷 Cambiar foto</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" onchange="onPhoto(event)">
+
+        <div style="margin-top:12px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:1px">📦 TIPO DE FOTO</div>
+          <div class="pill-row">
+            <div class="pill active" id="modeFlat" onclick="setPhotoMode('flat')">📄 Caja abierta/plana</div>
+            <div class="pill" id="modeBox" onclick="setPhotoMode('box')">📦 Caja armada</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIMS + REFERENCE -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:1px">📏 MEDIDAS MANUALES (mm)</div>
+          <div class="dim-row">
+            <div class="dim-group">
+              <label>Largo (L)</label>
+              <input type="number" id="manL" placeholder="—" min="0" oninput="onDimChange()">
+            </div>
+            <div class="dim-group">
+              <label>Ancho (W)</label>
+              <input type="number" id="manW" placeholder="—" min="0" oninput="onDimChange()">
+            </div>
+            <div class="dim-group">
+              <label>Alto (H)</label>
+              <input type="number" id="manH" placeholder="—" min="0" oninput="onDimChange()">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:1px">📏 OBJETO DE REFERENCIA (mejora precisión)</div>
+          <div class="pill-row">
+            <div class="pill active-green" id="refNone" onclick="setRef('none')">Sin referencia</div>
+            <div class="pill" id="refCard" onclick="setRef('card')">💳 Tarjeta (85.6×54mm)</div>
+            <div class="pill" id="refCoin10" onclick="setRef('coin10')">🪙 Moneda $10 (28mm)</div>
+            <div class="pill" id="refCoin1" onclick="setRef('coin1')">🪙 Moneda $1 (21mm)</div>
+            <div class="pill" id="refRuler" onclick="setRef('ruler')">📐 Regla visible</div>
+            <div class="pill" id="refA4" onclick="setRef('a4')">📄 Hoja A4 (210×297mm)</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="analyze()" id="btnAnalyze">🔍 Generar Layout</button>
+          <button class="btn btn-secondary" onclick="detectFromPhoto()" id="btnDetect">📷 Detectar medidas</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-bar" id="loadingBar"><div class="spinner"></div><span id="loadingMsg">Analizando foto con IA…</span></div>
+    <div class="error-box" id="errorBox"></div>
+
+    <div id="resultsSection" style="display:none;margin-top:14px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">MEDIDAS DETECTADAS</div>
+      <div class="result-row">
+        <div class="result-box" id="resLBox"><div class="label">Largo L</div><div class="value" id="resL">—</div><div class="unit">mm</div></div>
+        <div class="result-box" id="resWBox"><div class="label">Ancho W</div><div class="value" id="resW">—</div><div class="unit">mm</div></div>
+        <div class="result-box" id="resHBox"><div class="label">Alto H</div><div class="value" id="resH">—</div><div class="unit">mm</div></div>
+        <div class="result-box" id="resSheetBox"><div class="label">Hoja total</div><div class="value" id="resSheet" style="font-size:13px">—</div><div class="unit">ancho × alto</div></div>
+      </div>
+      <div class="cv-detail" id="cvDetail" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- BOX TYPE -->
+  <div class="card">
+    <div class="card-title">Tipo de caja / pegado</div>
+    <div class="pill-row">
+      <div class="pill active" id="typeTuckS" onclick="setType('tuckS')">📦 Tuck Recto</div>
+      <div class="pill" id="typeTuckR" onclick="setType('tuckR')">🔄 Tuck Invertido</div>
+      <div class="pill" id="typeAuto" onclick="setType('auto')">🔁 Fondo Automático</div>
+      <div class="pill" id="typeGlue" onclick="setType('glue')">🔒 Fondo Pegado</div>
+      <div class="pill" id="typeSnap" onclick="setType('snap')">🔐 Snap Lock</div>
+      <div class="pill" id="typeTray" onclick="setType('tray')">🍱 Bandeja</div>
+    </div>
+    <button class="adv-toggle" onclick="toggleAdvanced()">⚙️ Configuración avanzada ▼</button>
+    <div class="advanced-section" id="advancedSection"><div class="adv-grid"><div class="adv-group">
+          <h4>TAPA (solapa superior)</h4>
+          <div class="adv-field">
+            <label>Estilo</label>
+            <select id="advTopStyle" onchange="onAdvChange()">
+              <option value="tuck">Tuck (biselada)</option>
+              <option value="straight">Recta</option>
+              <option value="round">Redondeada</option>
+              <option value="lock">Con seguro</option>
+            </select>
+          </div>
+          <div class="adv-field">
+            <label>Alto solapa superior (mm)</label>
+            <input type="number" id="advTopH" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+          <div class="adv-field">
+            <label>Bisel solapa (mm)</label>
+            <input type="number" id="advTopBevel" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+        </div>
+        <div class="adv-group">
+          <h4>BASE (solapa inferior)</h4>
+          <div class="adv-field">
+            <label>Estilo</label>
+            <select id="advBotStyle" onchange="onAdvChange()">
+              <option value="tuck">Tuck (biselada)</option>
+              <option value="straight">Recta</option>
+              <option value="auto">Fondo automático</option>
+              <option value="glue">Pegado plano</option>
+              <option value="snap">Snap lock</option>
+            </select>
+          </div>
+          <div class="adv-field">
+            <label>Alto solapa inferior (mm)</label>
+            <input type="number" id="advBotH" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+          <div class="adv-field">
+            <label>Bisel base (mm)</label>
+            <input type="number" id="advBotBevel" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+        </div>
+        <div class="adv-group">
+          <h4>OREJAS / DUST FLAPS</h4>
+          <div class="adv-field">
+            <label>Alto oreja (mm)</label>
+            <input type="number" id="advEarH" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+          <div class="adv-field">
+            <label>Inset oreja (mm)</label>
+            <input type="number" id="advEarInset" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+        </div>
+        <div class="adv-group">
+          <h4>PESTAÑA DE PEGADO</h4>
+          <div class="adv-field">
+            <label>Ancho pestaña (mm)</label>
+            <input type="number" id="advGlueW" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+          <div class="adv-field">
+            <label>Bisel pestaña (mm)</label>
+            <input type="number" id="advGlueBevel" placeholder="auto" min="0" oninput="onAdvChange()">
+          </div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">Deja en blanco para usar valores automáticos basados en las dimensiones</p>
+    </div>
+  </div>
+
+  <!-- ADJUST DIMS -->
+  <div class="card" id="adjustCard" style="display:none">
+    <div class="card-title">📐 Ajustar medidas detectadas</div>
+    <div class="dim-row">
+      <div class="dim-group"><label>Largo (L)</label><input type="number" id="adjL" min="0" oninput="onAdjust()"></div>
+      <div class="dim-group"><label>Ancho (W)</label><input type="number" id="adjW" min="0" oninput="onAdjust()"></div>
+      <div class="dim-group"><label>Alto (H)</label><input type="number" id="adjH" min="0" oninput="onAdjust()"></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">El tipo de caja se mantiene como fue detectado en la foto</p>
+  </div>
+
+  <!-- DIELINE -->
+  <div class="card" id="dielineCard" style="display:none">
+    <div class="card-title">TROQUEL LINEAL</div>
+    <div class="dieline-wrap"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="btn-row" style="margin-top:12px"><button class="btn btn-secondary" onclick="copyDims()">📋 Copiar medidas</button>
+      <button class="btn btn-green" onclick="downloadPDF()">📄 Descargar PDF</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const S = {
+  key: '',
+  photoDataURL: null,
+  photoMode: 'flat',
+  ref: 'none',
+  boxType: 'tuckS',
+  L: 0, W: 0, H: 0,
+  detected: false,
+  cvReady: false,
+  cvSource: false,
+  mmPerPx: null,
+  advOpen: false,
+};
+
+const REF = {
+  none: null,
+  card: { w: 85.6, h: 54, shape: 'rect' },
+  coin10: { w: 28, h: 28, shape: 'circle' },
+  coin1: { w: 21, h: 21, shape: 'circle' },
+  a4: { w: 210, h: 297, shape: 'rect' },
+  ruler: { w: null, h: null, shape: 'ruler' },
+};
+
+let cvReady = false;
+function onOpenCvReady() {
+  cvReady = true; S.cvReady = true;
+  setStatus('ready', '✓ OpenCV.js listo — medición de píxeles activada');
+  document.getElementById('cvBadge').textContent = 'OpenCV ✓';
+}
+function setStatus(type, msg) {
+  const el = document.getElementById('cvStatus');
+  el.className = 'cv-status ' + type;
+  const dot = type === 'loading' ? '<div class="cv-dot pulse"></div>' : '<div class="cv-dot"></div>';
+  el.innerHTML = dot + '<span>' + msg + '</span>';
+}
+
+(function loadKey() {
+  try { const k = localStorage.getItem('or_key'); if (k) { S.key = k; document.getElementById('apiKey').value = k; document.getElementById('apiSaved').style.display = 'block'; } } catch(e){}
+})();
+function onKeyInput() { document.getElementById('apiSaved').style.display = 'none'; }
+function saveKey() {
+  S.key = document.getElementById('apiKey').value.trim();
+  try { localStorage.setItem('or_key', S.key); } catch(e){}
+  document.getElementById('apiSaved').style.display = 'block';
+}
+
+function setPhotoMode(m) {
+  S.photoMode = m;
+  ['Flat','Box'].forEach(x => document.getElementById('mode'+x).classList.remove('active'));
+  document.getElementById('mode' + (m === 'flat' ? 'Flat' : 'Box')).classList.add('active');
+}
+function setRef(r) {
+  S.ref = r;
+  ['None','Card','Coin10','Coin1','Ruler','A4'].forEach(x => { const el = document.getElementById('ref'+x); el.classList.remove('active','active-green'); });
+  document.getElementById('ref' + r.charAt(0).toUpperCase() + r.slice(1)).classList.add('active-green');
+  if (S.photoDataURL && cvReady) runOpenCV();
+}
+function onPhoto(evt) {
+  const file = evt.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    S.photoDataURL = e.target.result;
+    const img = document.getElementById('photoImg');
+    img.src = S.photoDataURL; img.style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+    document.getElementById('changeBtn').style.display = 'block';
+    document.getElementById('photoZone').classList.add('has-photo');
+    if (cvReady) { runOpenCV(); } else { setStatus('loading', '⏳ OpenCV cargando…'); }
+  };
+  reader.readAsDataURL(file);
+}
+function runOpenCV() {
+  if (!S.photoDataURL || !cvReady) return;
+  setStatus('loading', '🔍 OpenCV analizando imagen…');
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const canvas = document.getElementById('cvCanvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
+      canvas.style.display = 'none';
+      const src = cv.imread(canvas); const gray = new cv.Mat(); const blur = new cv.Mat();
+      const edges = new cv.Mat(); const contours = new cv.MatVector(); const hierarchy = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+      cv.Canny(blur, edges, 50, 150);
+      const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3,3));
+      const dilated = new cv.Mat(); cv.dilate(edges, dilated, kernel);
+      cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+      const rects = [];
+      for (let i = 0; i < contours.size(); i++) {
+        const cnt = contours.get(i); const rect = cv.boundingRect(cnt);
+        const area = rect.width * rect.height; const imgArea = canvas.width * canvas.height;
+        if (area > imgArea * 0.005 && area < imgArea * 0.98) {
+          const peri = cv.arcLength(cnt, true); const approx = new cv.Mat();
+          cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+          rects.push({ rect, area, corners: approx.rows, cnt: i }); approx.delete();
+        } cnt.delete();
+      }
+      rects.sort((a, b) => b.area - a.area);
+      let refRect = null; let mmPerPx = null; const refSpec = REF[S.ref];
+      if (refSpec && refSpec.shape === 'rect') {
+        const targetAR = refSpec.w / refSpec.h;
+        for (const r of rects) {
+          const ar = r.rect.width / r.rect.height;
+          const bestAR = Math.min(Math.abs(ar - targetAR)/targetAR, Math.abs((1/ar) - targetAR)/targetAR);
+          if (bestAR < 0.15) { refRect = r.rect; mmPerPx = Math.max(refSpec.w,refSpec.h)/Math.max(r.rect.width,r.rect.height); break; }
+        }
+      } else if (refSpec && refSpec.shape === 'circle') {
+        for (const r of rects) {
+          if (Math.abs(r.rect.width/r.rect.height - 1) < 0.2) { refRect = r.rect; mmPerPx = refSpec.w/Math.max(r.rect.width,r.rect.height); break; }
+        }
+      }
+      S.mmPerPx = mmPerPx; S.cvSource = mmPerPx !== null;
+      const overlay = document.getElementById('cvOverlay');
+      const iw = canvas.width, ih = canvas.height;
+      overlay.setAttribute('viewBox', `0 0 ${iw} ${ih}`);
+      overlay.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      overlay.style.display = 'block'; overlay.innerHTML = '';
+      rects.slice(0, 5).forEach((r, idx) => {
+        overlay.appendChild(svgRect(r.rect.x, r.rect.y, r.rect.width, r.rect.height, idx===0?'#6c63ff':'#4a4a7a', idx===0?0.5:0.2));
+      });
+      if (refRect) {
+        const rEl = svgRect(refRect.x, refRect.y, refRect.width, refRect.height, '#43e97b', 1);
+        rEl.setAttribute('stroke-width', '3'); overlay.appendChild(rEl);
+        const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+        txt.setAttribute('x', refRect.x + 4); txt.setAttribute('y', refRect.y - 4);
+        txt.setAttribute('fill', '#43e97b'); txt.setAttribute('font-size', Math.max(14, iw * 0.02));
+        txt.setAttribute('font-family', 'monospace');
+        txt.textContent = 'REF ' + (1/mmPerPx).toFixed(2) + 'px/mm'; overlay.appendChild(txt);
+      }
+      let boxRect = null;
+      for (const r of rects) {
+        if (refRect && rectsOverlap(r.rect, refRect) > 0.5) continue;
+        if (r.area > (canvas.width * canvas.height * 0.03)) { boxRect = r.rect; break; }
+      }
+      if (boxRect) {
+        const bEl = svgRect(boxRect.x, boxRect.y, boxRect.width, boxRect.height, '#ff6b6b', 1);
+        bEl.setAttribute('stroke-width', '3'); overlay.appendChild(bEl);
+      }
+      let detailMsg = '';
+      if (mmPerPx && boxRect) {
+        const Lmm = Math.round(boxRect.width * mmPerPx); const Hmm = Math.round(boxRect.height * mmPerPx);
+        S.L = Lmm; S.H = Hmm;
+        detailMsg = `<b>Escala:</b> ${(1/mmPerPx).toFixed(2)} px/mm · <b>Caja:</b> ${boxRect.width}×${boxRect.height} px → ${Lmm}×${Hmm} mm`;
+        if (refRect) { const rn = {card:'Tarjeta',coin10:'Moneda $10',coin1:'Moneda $1',a4:'Hoja A4'}[S.ref]||S.ref; detailMsg = `<b>Ref (${rn}):</b> ${refRect.width}×${refRect.height} px · ` + detailMsg; }
+        showDetectedDims(S.L, S.W || Math.round(S.L * 0.3), S.H, true);
+        document.getElementById('cvDetail').innerHTML = detailMsg; document.getElementById('cvDetail').style.display = 'block';
+        setStatus('ready', `✓ OpenCV: escala calibrada — ${(1/mmPerPx).toFixed(2)} px/mm`);
+      } else if (mmPerPx) {
+        detailMsg = `Referencia calibrada: ${(1/mmPerPx).toFixed(2)} px/mm. Sin contorno claro — ingresa medidas manualmente.`;
+        document.getElementById('cvDetail').innerHTML = detailMsg; document.getElementById('cvDetail').style.display = 'block';
+        setStatus('ready', `✓ OpenCV listo — ${(1/mmPerPx).toFixed(2)} px/mm`);
+      } else { setStatus('ready', '✓ OpenCV activo · Sin referencia — precisión basada en IA'); }
+      src.delete(); gray.delete(); blur.delete(); edges.delete(); dilated.delete(); kernel.delete(); contours.delete(); hierarchy.delete();
+    } catch(err) { console.error('OpenCV error:', err); setStatus('error', '⚠ OpenCV error: ' + err.message); }
+  };
+  img.src = S.photoDataURL;
+}
+function svgRect(x, y, w, h, color, opacity) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  el.setAttribute('x', x); el.setAttribute('y', y); el.setAttribute('width', w); el.setAttribute('height', h);
+  el.setAttribute('fill', 'none'); el.setAttribute('stroke', color); el.setAttribute('stroke-width', '2'); el.setAttribute('stroke-opacity', opacity);
+  return el;
+}
+function rectsOverlap(a, b) {
+  const ix = Math.max(0, Math.min(a.x+a.width, b.x+b.width) - Math.max(a.x, b.x));
+  const iy = Math.max(0, Math.min(a.y+a.height, b.y+b.height) - Math.max(a.y, b.y));
+  const inter = ix * iy; return inter / (a.width*a.height + b.width*b.height - inter);
+}
+async function detectFromPhoto() {
+  if (!S.photoDataURL) return showError('Primero sube una foto');
+  if (!S.key) return showError('Ingresa tu API key de OpenRouter');
+  showLoading('Analizando foto con IA (GPT-4o)…'); hideError();
+  try {
+    const refLabel = {none:'no reference object visible',card:'a standard credit/debit card (85.6×54mm) is visible as reference',coin10:'a Mexican $10 coin (28mm diameter) is visible as reference',coin1:'a Mexican $1 coin (21mm diameter) is visible as reference',ruler:'a ruler is visible for scale reference',a4:'an A4 sheet (210×297mm) is visible as reference'}[S.ref];
+    const scaleNote = S.mmPerPx ? `OpenCV has already calibrated the scale at ${(1/S.mmPerPx).toFixed(2)} px/mm. Use this to improve your measurement.` : 'No pixel calibration available.';
+    const prompt = `You are a precision packaging engineer. Analyze this image of a cardboard box.\nContext: ${S.photoMode==='flat'?'The box is FLAT/UNFOLDED (a dieline layout).':'The box is ASSEMBLED (3D view).'}\nReference: ${refLabel}.\n${scaleNote}\n\nMEASUREMENT PROTOCOL:\n1. Locate the reference object\n2. Count exactly how many pixels wide it is\n3. Calculate mm_per_pixel = known_mm / pixel_count\n4. Measure each box dimension using that same scale\n5. Report pixel counts and calculations\n\nRespond ONLY with valid JSON:\n{\n  "L": <number, length in mm>,\n  "W": <number, width in mm>,\n  "H": <number, height in mm>,\n  "boxType": <"tuckS"|"tuckR"|"auto"|"glue"|"snap"|"tray">,\n  "notes": "<measurement details>",\n  "confidence": <0-1>\n}`;
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Authorization': 'Bearer ' + S.key, 'Content-Type': 'application/json', 'HTTP-Referer': location.href, 'X-Title': 'Box Scanner Arqueta'},
+      body: JSON.stringify({model: 'openai/gpt-4o', messages: [{role: 'user', content: [{type: 'text', text: prompt}, {type: 'image_url', image_url: {url: S.photoDataURL, detail: 'high'}}]}], max_tokens: 600, response_format: {type: 'json_object'}})
+    });
+    if (!resp.ok) { const t = await resp.text(); throw new Error(resp.status + ': ' + t); }
+    const data = await resp.json(); const json = JSON.parse(data.choices[0].message.content);
+    hideLoading(); S.L = json.L||S.L; S.W = json.W||S.W; S.H = json.H||S.H;
+    if (json.boxType) setType(json.boxType);
+    showDetectedDims(S.L, S.W, S.H, false);
+    if (json.notes) { const detail = document.getElementById('cvDetail'); detail.innerHTML = (detail.innerHTML?detail.innerHTML+' · ':'')+' <b>IA:</b> '+json.notes; detail.style.display='block'; }
+  } catch(e) { hideLoading(); showError('Error IA: ' + e.message); }
+}
+
+function analyze() {
+  const L = parseFloat(document.getElementById('adjL').value||document.getElementById('manL').value||S.L)||0;
+  const W = parseFloat(document.getElementById('adjW').value||document.getElementById('manW').value||S.W)||0;
+  const H = parseFloat(document.getElementById('adjH').value||document.getElementById('manH').value||S.H)||0;
+  if (!L||!W||!H) return showError('Ingresa o detecta las tres dimensiones (L, W, H)');
+  S.L=L; S.W=W; S.H=H; hideError(); renderDieline();
+}
+function onDimChange() {
+  S.L=parseFloat(document.getElementById('manL').value)||S.L;
+  S.W=parseFloat(document.getElementById('manW').value)||S.W;
+  S.H=parseFloat(document.getElementById('manH').value)||S.H;
+}
+function onAdjust() {
+  S.L=parseFloat(document.getElementById('adjL').value) || S.L;
+  S.W=parseFloat(document.getElementById('adjW').value)||S.W;
+  S.H=parseFloat(document.getElementById('adjH').value)||S.H;
+  if (S.L&&S.W&&S.H) renderDieline();
+}
+function onAdvChange() { if (S.L&&S.W&&S.H) renderDieline(); }
+
+const TYPES=['tuckS','tuckR','auto','glue','snap','tray'];
+const TYPE_IDS={tuckS:'TuckS',tuckR:'TuckR',auto:'Auto',glue:'Glue',snap:'Snap',tray:'Tray'};
+function setType(t) {
+  S.boxType=t;
+  TYPES.forEach(x=>document.getElementById('type'+TYPE_IDS[x]).classList.remove('active'));
+  document.getElementById('type'+TYPE_IDS[t]).classList.add('active');
+  if (S.L&&S.W&&S.H) renderDieline();
+}
+function toggleAdvanced() { S.advOpen=!S.advOpen; document.getElementById('advancedSection').classList.toggle('open',S.advOpen); }
+function getAdvancedSpec() {
+  return {topStyle:document.getElementById('advTopStyle').value,topH:parseFloat(document.getElementById('advTopH').value)||null,topBevel:parseFloat(document.getElementById('advTopBevel').value)||null,botStyle:document.getElementById('advBotStyle').value,botH:parseFloat(document.getElementById('advBotH').value)||null,botBevel:parseFloat(document.getElementById('advBotBevel').value)||null,earH:parseFloat(document.getElementById('advEarH').value)||null,earInset:parseFloat(document.getElementById('advEarInset').value)||null,glueW:parseFloat(document.getElementById('advGlueW').value)||null,glueBevel:parseFloat(document.getElementById('advGlueBevel').value)||null};
+}
+function showDetectedDims(L,W,H,fromCV) {
+  S.detected=true; S.L=L; S.W=W; S.H=H;
+  document.getElementById('resL').textContent=L||'—'; document.getElementById('resW').textContent=W||'—'; document.getElementById('resH').textContent=H||'—';
+  ['resLBox','resWBox','resHBox'].forEach(id=>document.getElementById(id).classList.toggle('cv-source',fromCV));
+  const adv=getAdvancedSpec(); const spec=calcSheet(L,W,H,S.boxType,adv);
+  document.getElementById('resSheet').textContent=spec?`${Math.round(spec.sw)}×${Math.round(spec.sh)}`:'—';
+  document.getElementById('resultsSection').style.display='block';
+  document.getElementById('adjL').value=L||''; document.getElementById('adjW').value=W||''; document.getElementById('adjH').value=H||'';
+  document.getElementById('adjustCard').style.display='block'; renderDieline();
+}
+function calcSheet(L,W,H,type,adv) {
+  if (!L||!W||!H) return null;
+  const topH=adv.topH||Math.round(W*0.9);
+  const botH=adv.botH||(type==='auto'||type==='glue'||type==='snap'?Math.round(W*0.5):Math.round(W*0.9));
+  const earH=adv.earH||Math.round(Math.min(topH,botH)*0.9);
+  const glueW=adv.glueW||Math.max(8,Math.round(W*0.15));
+  let sw,sh;
+  if (type==='tray') { sw=L+2*H+2*glueW; sh=W+2*H; } else { sw=2*L+2*W+glueW; sh=topH+H+botH; }
+  return {sw,sh,topH,botH,earH,glueW,L,W,H};
+}
+const NS='http://www.w3.org/2000/svg';
+const CUT='#1a1a1a'; const FOLD='#6c63ff'; const GLUE='#ff6b6b'; const PAD=40;
+function svgEl(tag,attrs){const el=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;}
+function svgLine(x1,y1,x2,y2,stroke,dash){const attrs={x1,y1,x2,y2,stroke,'stroke-width':stroke===CUT?1.5:1,fill:'none'};if(dash)attrs['stroke-dasharray']=dash;return svgEl('line',attrs);}
+function svgPoly(pts,stroke,fill,dash){const points=pts.map(p=>p.join(',')).join(' ');const attrs={points,stroke,fill:fill||'none','stroke-width':stroke===CUT?1.5:1};if(dash)attrs['stroke-dasharray']=dash;return svgEl('polygon',attrs);}
+function svgText(x,y,text,size,color,anchor){const el=svgEl('text',{x,y,'font-size':size||9,fill:color||'#555','text-anchor':anchor||'middle','font-family':'monospace'});el.textContent=text;return el;}
+function svgDimH(svg,x1,x2,y,label){const g=svgEl('g',{});g.appendChild(svgLine(x1,y,x2,y,'#aaa'));g.appendChild(svgLine(x1,y-3,x1,y+3,'#aaa'));g.appendChild(svgLine(x2,y-3,x2,y+3,'#aaa'));g.appendChild(svgText((x1+x2)/2,y-4,label,8,'#777'));svg.appendChild(g);}
+function svgDimV(svg,x,y1,y2,label){const g=svgEl('g',{});g.appendChild(svgLine(x,y1,x,y2,'#aaa'));g.appendChild(svgLine(x-3,y1,x+3,y1,'#aaa'));g.appendChild(svgLine(x-3,y2,x+3,y2,'#aaa'));const t=svgText(x-6,(y1+y2)/2,label,8,'#777','end');t.setAttribute('dominant-baseline','middle');svg.appendChild(g);}
+function renderDieline(){
+  const L=S.L,W=S.W,H=S.H;if(!L||!W||!H)return;
+  const adv=getAdvancedSpec();const spec=calcSheet(L,W,H,S.boxType,adv);if(!spec)return;
+  const{sw,sh,topH,botH,earH,glueW}=spec;
+  const bevel=adv.topBevel||Math.min(4,W*0.05);
+  const botBevel=adv.botBevel||Math.min(4,W*0.05);
+  const glueBevel=adv.glueBevel||Math.min(4,W*0.08);
+  const earInset=adv.earInset||Math.min(3,H*0.05);
+  const scale=Math.min(1,(820-PAD*2)/sw);
+  const vw=sw*scale+PAD*2,vh=sh*scale+PAD*2+30;
+  const svg=document.getElementById('dieline');
+  svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${vw} ${vh}`);svg.setAttribute('width',vw);svg.setAttribute('height',vh);svg.style.background='#fff';
+  const s=n=>n*scale;const ox=PAD,oy=PAD+15;
+  const g=svgEl('g',{});svg.appendChild(g);
+  if(S.boxType==='tray'){renderTray(g,ox,oy,s,L,W,H,glueW,bevel);}else{renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv);}
+  svgDimH(svg,ox,ox+s(sw),oy-10,`${Math.round(sw)} mm`);
+  svgDimV(svg,ox-10,oy,oy+s(sh),`${Math.round(sh)} mm`);
+  const legY=oy+s(sh)+20;
+  [['Corte',CUT,''],['Doblez',FOLD,'4,2'],['Pegado',GLUE,'']].forEach(([lbl,clr,dash],i)=>{const lx=ox+i*120;g.appendChild(svgLine(lx,legY,lx+30,legY,clr,dash||null));g.appendChild(svgText(lx+34,legY+3,lbl,8,'#555','start'));});
+  document.getElementById('dielineCard').style.display='block';
+  document.getElementById('resSheet').textContent=`${Math.round(sw)}×${Math.round(sh)}`;
+}
+function renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv){
+  const x0=ox,x1=x0+s(glueW),x2=x1+s(W),x3=x2+s(L),x4=x3+s(W),x5=x4+s(L);
+  const y0=oy,y1=y0+s(topH),y2=y1+s(H),y3=y2+s(botH);
+  const inv=S.boxType==='tuckR';
+  const topFlap=inv?x2:x3,topFlapEnd=inv?x3:x4;
+  g.appendChild(svgPoly([[topFlap,y1],[topFlap+s(bevel),y0],[topFlapEnd-s(bevel),y0],[topFlapEnd,y1]],CUT,'none'));
+  const botFlap=inv?x3:x2;
+  const botFlapEnd=inv?x4:x3;
+  g.appendChild(svgPoly([[botFlap,y2],[botFlap+s(botBevel),y3],[botFlapEnd-s(botBevel),y3],[botFlapEnd,y2]],CUT,'none'));
+  g.appendChild(svgLine(x1,y0,x5,y0,CUT));g.appendChild(svgLine(x1,y3,x5,y3,CUT));
+  g.appendChild(svgLine(x1,y0,x1,y3,CUT));g.appendChild(svgLine(x5,y0,x5,y3,CUT));
+  g.appendChild(svgPoly([[x0,y1+s(glueBevel)],[x1,y1],[x1,y2],[x0,y2-s(glueBevel)]],GLUE,'rgba(255,107,107,0.08)'));
+  [[x1,x2],[x4,x5]].forEach(([xa,xb])=>{const mid=(xa+xb)/2;const eW=s(W)*0.45;
+    g.appendChild(svgPoly([[mid-eW,y1],[mid-eW+s(earInset),y0+s(earH-earInset)],[mid+eW-s(earInset),y0+s(earH-earInset)],[mid+eW,y1]],CUT,'none'));});
+  [[x1,x2],[x4,x5]].forEach(([xa,xb])=>{const mid=(xa+xb)/2;const eW=s(W)*0.45;
+    g.appendChild(svgPoly([[mid-eW,y2],[mid-eW+s(earInset),y3-s(earH-earInset)],[mid+eW-s(earInset),y3-s(earH-earInset)],[mid+eW,y2]],CUT,'none'));});
+  [x1,x2,x3,x4,x5].forEach(x=>g.appendChild(svgLine(x,y0,x,y3,FOLD,'4,2')));
+  [y1,y2].forEach(y=>g.appendChild(svgLine(x1,y,x5,y,FOLD,'4,2')));
+  const panels=[[x1,x2,'LADO\n'+W+'mm'],[x2,x3,'FRENTE\n'+L+'mm'],[x3,x4,'LADO\n'+W+'mm'],[x4,x5,'DORSO\n'+L+'mm']];
+  const midY=(y1+y2)/2;
+  panels.forEach(([xa,xb,lbl])=>{lbl.split('\n').forEach((line,i)=>{g.appendChild(svgText((xa+xb)/2,midY-6+i*11,line,9,'#444'));});});
+  g.appendChild(svgText((x0+x1)/2,midY,'PEG',8,'#ff6b6b'));
+}
+function renderTray(g,ox,oy,s,L,W,H,glueW,bevel){
+  const x0=ox,x1=x0+s(glueW),x2=x1+s(H),x3=x2+s(L),x4=x3+s(H),x5=x4+s(glueW);
+  const y0=oy,y1=y0+s(H),y2=y1+s(W),y3=y2+s(H);
+  g.appendChild(svgLine(x1,y0,x4,y0,CUT));g.appendChild(svgLine(x1,y3,x4,y3,CUT));
+  g.appendChild(svgLine(x0,y1,x5,y1,CUT));g.appendChild(svgLine(x0,y2,x5,y2,CUT));
+  g.appendChild(svgLine(x1,y0,x1,y3,CUT));g.appendChild(svgLine(x4,y0,x4,y3,CUT));
+  g.appendChild(svgLine(x0,y1,x0,y2,CUT));g.appendChild(svgLine(x5,y1,x5,y2,CUT));
+  g.appendChild(svgLine(x1,y0,x0,y1,CUT));g.appendChild(svgLine(x4,y0,x5,y1,CUT));
+  g.appendChild(svgLine(x1,y3,x0,y2,CUT));g.appendChild(svgLine(x4,y3,x5,y2,CUT));
+  [x1,x2,x3,x4].forEach(x=>g.appendChild(svgLine(x,y0,x,y3,FOLD,'4,2')));
+  [y1,y2].forEach(y=>g.appendChild(svgLine(x0,y,x5,y,FOLD,'4,2')));
+  const cx=(x2+x3)/2,cy=(y1+y2)/2;
+  g.appendChild(svgText(cx,cy-5,'BASE',10,'#444'));g.appendChild(svgText(cx,cy+8,`${L}×${W} mm`,9,'#777'));
+}
+function downloadPDF(){
+  const{jsPDF}=window.jspdf;const adv=getAdvancedSpec();const spec=calcSheet(S.L,S.W,S.H,S.boxType,adv);if(!spec)return;
+  const{sw,sh}=spec;const margin=15;
+  const doc=new jsPDF({unit:'mm',format:[sw+margin*2,sh+margin*2+30],orientation:'landscape'});
+  doc.setFontSize(10);doc.setTextColor(50);doc.text(`ARQUETA FOLDING — ${S.boxType.toUpperCase()} — L${S.L}×W${S.W}×H${S.H} mm`,margin,8);
+  doc.setFontSize(7);doc.text(`Hoja: ${Math.round(sw)}×${Math.round(sh)} mm${S.cvSource?' · Medido con OpenCV':''}`,margin,13);
+  const svgEl2=document.getElementById('dieline');const svgData=new XMLSerializer().serializeToString(svgEl2);
+  const canvas2=document.createElement('canvas');const scaleF=3;
+  canvas2.width=svgEl2.getAttribute('width')*scaleF;canvas2.height=svgEl2.getAttribute('height')*scaleF;
+  const ctx2=canvas2.getContext('2d');ctx2.fillStyle='#fff';ctx2.fillRect(0,0,canvas2.width,canvas2.height);
+  const img2=new Image();const blob=new Blob([svgData],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);
+  img2.onload=()=>{ctx2.drawImage(img2,0,0,canvas2.width,canvas2.height);const imgData=canvas2.toDataURL('image/png');doc.addImage(imgData,'PNG',margin,margin,sw,sh);doc.save(`troquel_${S.boxType}_L${S.L}W${S.W}H${S.H}.pdf`);URL.revokeObjectURL(url);};
+  img2.src=url;
+}
+function copyDims(){const text=`L=${S.L}mm W=${S.W}mm H=${S.H}mm Tipo=${S.boxType}`;navigator.clipboard.writeText(text).then(()=>alert('Medidas copiadas: '+text));}
+function showLoading(msg){document.getElementById('loadingMsg').textContent=msg||'Procesando…';document.getElementById('loadingBar').classList.add('show');}
+function hideLoading(){document.getElementById('loadingBar').classList.remove('show');}
+function showError(msg){const eb=document.getElementById('errorBox');eb.textContent=msg;eb.classList.add('show');}
+function hideError(){document.getElementById('errorBox').classList.remove('show');}
+</script>
+</body>
+</html>
