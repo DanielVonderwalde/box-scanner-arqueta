@@ -252,7 +252,7 @@ async function detectFromPhoto(){
     const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{'Authorization':'Bearer '+S.key,'Content-Type':'application/json','HTTP-Referer':location.href,'X-Title':'Box Scanner Arqueta'},
-      body:JSON.stringify({model:'google/gemini-flash-1.5',messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:S.photoDataURL,detail:'high'}}]}],max_tokens:400,response_format:{type:'json_object'}})
+      body:JSON.stringify({model:'google/gemini-1.5-flash',messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:S.photoDataURL,detail:'high'}}]}],max_tokens:400,response_format:{type:'json_object'}})
     });
     if(!resp.ok){const t=await resp.text();throw new Error(resp.status+': '+t);}
     const data=await resp.json();const json=JSON.parse(data.choices[0].message.content);
@@ -282,7 +282,44 @@ function svgText(x,y,text,size,color,anchor){const el=svgEl('text',{x,y,'font-si
 function svgDimH(svg,x1,x2,y,label){const g=svgEl('g',{});g.appendChild(svgLine(x1,y,x2,y,'#aaa'));g.appendChild(svgLine(x1,y-3,x1,y+3,'#aaa'));g.appendChild(svgLine(x2,y-3,x2,y+3,'#aaa'));g.appendChild(svgText((x1+x2)/2,y-4,label,8,'#777'));svg.appendChild(g);}
 function svgDimV(svg,x,y1,y2,label){const g=svgEl('g',{});g.appendChild(svgLine(x,y1,x,y2,'#aaa'));g.appendChild(svgLine(x-3,y1,x+3,y1,'#aaa'));g.appendChild(svgLine(x-3,y2,x+3,y2,'#aaa'));const t=svgText(x-6,(y1+y2)/2,label,8,'#777','end');t.setAttribute('dominant-baseline','middle');svg.appendChild(g);}
 function renderDieline(){const L=S.L,W=S.W,H=S.H;if(!L||!W||!H)return;const adv=getAdvancedSpec();const spec=calcSheet(L,W,H,S.boxType,adv);if(!spec)return;const{sw,sh,topH,botH,earH,glueW}=spec;const bevel=adv.topBevel||Math.min(4,W*0.05);const botBevel=adv.botBevel||Math.min(4,W*0.05);const glueBevel=adv.glueBevel||Math.min(4,W*0.08);const earInset=adv.earInset||Math.min(3,H*0.05);const scale=Math.min(1,(820-PAD*2)/sw);const vw=sw*scale+PAD*2,vh=sh*scale+PAD*2+30;const svg=document.getElementById('dieline');svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${vw} ${vh}`);svg.setAttribute('width',vw);svg.setAttribute('height',vh);svg.style.background='#fff';const s=n=>n*scale;const ox=PAD,oy=PAD+15;const g=svgEl('g',{});svg.appendChild(g);if(S.boxType==='tray'){renderTray(g,ox,oy,s,L,W,H,glueW,bevel);}else{renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv);}svgDimH(svg,ox,ox+s(sw),oy-10,`${Math.round(sw)} mm`);svgDimV(svg,ox-10,oy,oy+s(sh),`${Math.round(sh)} mm`);const legY=oy+s(sh)+20;[['Corte',CUT,''],['Doblez',FOLD,'4,2'],['Pegado',GLUE,'']].forEach(([lbl,clr,dash],i)=>{const lx=ox+i*120;g.appendChild(svgLine(lx,legY,lx+30,legY,clr,dash||null));g.appendChild(svgText(lx+34,legY+3,lbl,8,'#555','start'));});document.getElementById('dielineCard').style.display='block';document.getElementById('resSheet').textContent=`${Math.round(sw)}×${Math.round(sh)}`;}
-function renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv){const x0=ox,x1=x0+s(glueW),x2=x1+s(W),x3=x2+s(L),x4=x3+s(W),x5=x4+s(L);const y0=oy,y1=y0+s(topH),y2=y1+s(H),y3=y2+s(botH);const inv=S.boxType==='tuckR';const topFlap=inv?x2:x3,topFlapEnd=inv?x3:x4;g.appendChild(svgPoly([[topFlap,y1],[topFlap+s(bevel),y0],[topFlapEnd-s(bevel),y0],[topFlapEnd,y1]],CUT,'none'));const botFlap=inv?x3:x2;const botFlapEnd=inv?x4:x3;g.appendChild(svgPoly([[botFlap,y2],[botFlap+s(botBevel),y3],[botFlapEnd-s(botBevel),y3],[botFlapEnd,y2]],CUT,'none'));g.appendChild(svgLine(x1,y0,x5,y0,CUT));g.appendChild(svgLine(x1,y3,x5,y3,CUT));g.appendChild(svgLine(x1,y0,x1,y3,CUT));g.appendChild(svgLine(x5,y0,x5,y3,CUT));g.appendChild(svgPoly([[x0,y1+s(glueBevel)],[x1,y1],[x1,y2],[x0,y2-s(glueBevel)]],GLUE,'rgba(255,107,107,0.08)'));[[x1,x2],[x4,x5]].forEach(([xa,xb])=>{const mid=(xa+xb)/2;const eW=s(W)*0.45;g.appendChild(svgPoly([[mid-eW,y1],[mid-eW+s(earInset),y0+s(earH-earInset)],[mid+eW-s(earInset),y0+s(earH-earInset)],[mid+eW,y1]],CUT,'none'));});[[x1,x2],[x4,x5]].forEach(([xa,xb])=>{const mid=(xa+xb)/2;const eW=s(W)*0.45;g.appendChild(svgPoly([[mid-eW,y2],[mid-eW+s(earInset),y3-s(earH-earInset)],[mid+eW-s(earInset),y3-s(earH-earInset)],[mid+eW,y2]],CUT,'none'));});[x1,x2,x3,x4,x5].forEach(x=>g.appendChild(svgLine(x,y0,x,y3,FOLD,'4,2')));[y1,y2].forEach(y=>g.appendChild(svgLine(x1,y,x5,y,FOLD,'4,2')));const panels=[[x1,x2,'LADO\n'+W+'mm'],[x2,x3,'FRENTE\n'+L+'mm'],[x3,x4,'LADO\n'+W+'mm'],[x4,x5,'DORSO\n'+L+'mm']];const midY=(y1+y2)/2;panels.forEach(([xa,xb,lbl])=>{lbl.split('\n').forEach((line,i)=>{g.appendChild(svgText((xa+xb)/2,midY-6+i*11,line,9,'#444'));});});g.appendChild(svgText((x0+x1)/2,midY,'PEG',8,'#ff6b6b'));}
+function renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv){
+  const x0=ox,x1=x0+s(glueW),x2=x1+s(W),x3=x2+s(L),x4=x3+s(W),x5=x4+s(L);
+  const y0=oy,y1=y0+s(topH),y2=y1+s(H),y3=y2+s(botH);
+  const inv=S.boxType==='tuckR';
+  // Tuck flaps on L panels (FRENTE x2-x3 and DORSO x4-x5)
+  // tuckR: top tuck on FRENTE, bottom tuck on DORSO
+  // tuckS: top tuck on DORSO, bottom tuck on FRENTE
+  const topTL=inv?x2:x4, topTR=inv?x3:x5;
+  const botTL=inv?x4:x2, botTR=inv?x5:x3;
+  // TOP TUCK FLAP
+  g.appendChild(svgPoly([[topTL,y1],[topTL+s(bevel),y0],[topTR-s(bevel),y0],[topTR,y1]],CUT,'none'));
+  // BOTTOM TUCK FLAP
+  g.appendChild(svgPoly([[botTL,y2],[botTL+s(botBevel),y3],[botTR-s(botBevel),y3],[botTR,y2]],CUT,'none'));
+  // BODY EDGES (cut lines — only body height, not full sheet)
+  g.appendChild(svgLine(x1,y1,x1,y2,CUT));
+  g.appendChild(svgLine(x5,y1,x5,y2,CUT));
+  // GLUE TAB
+  g.appendChild(svgPoly([[x0,y1+s(glueBevel)],[x1,y1],[x1,y2],[x0,y2-s(glueBevel)]],GLUE,'rgba(255,107,107,0.08)'));
+  // DUST FLAPS on LADO panels (x1-x2 and x3-x4) — top and bottom
+  [[x1,x2],[x3,x4]].forEach(([xa,xb])=>{
+    const mid=(xa+xb)/2; const eW=s(W)*0.45;
+    g.appendChild(svgPoly([[mid-eW,y1],[mid-eW+s(earInset),y0+s(earH-earInset)],[mid+eW-s(earInset),y0+s(earH-earInset)],[mid+eW,y1]],CUT,'none'));
+    g.appendChild(svgPoly([[mid-eW,y2],[mid-eW+s(earInset),y3-s(earH-earInset)],[mid+eW-s(earInset),y3-s(earH-earInset)],[mid+eW,y2]],CUT,'none'));
+  });
+  // FOLD LINES — vertical (body only, panels x1..x5)
+  [x1,x2,x3,x4,x5].forEach(x=>g.appendChild(svgLine(x,y1,x,y2,FOLD,'4,2')));
+  // Extend fold lines through tuck flap area for tuck panels
+  [topTL,topTR].forEach(x=>g.appendChild(svgLine(x,y0,x,y1,FOLD,'4,2')));
+  [botTL,botTR].forEach(x=>g.appendChild(svgLine(x,y2,x,y3,FOLD,'4,2')));
+  // FOLD LINES — horizontal at y1 and y2
+  g.appendChild(svgLine(x1,y1,x5,y1,FOLD,'4,2'));
+  g.appendChild(svgLine(x1,y2,x5,y2,FOLD,'4,2'));
+  // PANEL LABELS
+  const panels=[[x1,x2,'LADO\n'+W+'mm'],[x2,x3,'FRENTE\n'+L+'mm'],[x3,x4,'LADO\n'+W+'mm'],[x4,x5,'DORSO\n'+L+'mm']];
+  const midY=(y1+y2)/2;
+  panels.forEach(([xa,xb,lbl])=>{lbl.split('\n').forEach((line,i)=>{g.appendChild(svgText((xa+xb)/2,midY-6+i*11,line,9,'#444'));});});
+  g.appendChild(svgText((x0+x1)/2,midY,'PEG',8,'#ff6b6b'));
+}
 function renderTray(g,ox,oy,s,L,W,H,glueW,bevel){const x0=ox,x1=x0+s(glueW),x2=x1+s(H),x3=x2+s(L),x4=x3+s(H),x5=x4+s(glueW);const y0=oy,y1=y0+s(H),y2=y1+s(W),y3=y2+s(H);g.appendChild(svgLine(x1,y0,x4,y0,CUT));g.appendChild(svgLine(x1,y3,x4,y3,CUT));g.appendChild(svgLine(x0,y1,x5,y1,CUT));g.appendChild(svgLine(x0,y2,x5,y2,CUT));g.appendChild(svgLine(x1,y0,x1,y3,CUT));g.appendChild(svgLine(x4,y0,x4,y3,CUT));g.appendChild(svgLine(x0,y1,x0,y2,CUT));g.appendChild(svgLine(x5,y1,x5,y2,CUT));g.appendChild(svgLine(x1,y0,x0,y1,CUT));g.appendChild(svgLine(x4,y0,x5,y1,CUT));g.appendChild(svgLine(x1,y3,x0,y2,CUT));g.appendChild(svgLine(x4,y3,x5,y2,CUT));[x1,x2,x3,x4].forEach(x=>g.appendChild(svgLine(x,y0,x,y3,FOLD,'4,2')));[y1,y2].forEach(y=>g.appendChild(svgLine(x0,y,x5,y,FOLD,'4,2')));const cx=(x2+x3)/2,cy=(y1+y2)/2;g.appendChild(svgText(cx,cy-5,'BASE',10,'#444'));g.appendChild(svgText(cx,cy+8,`${L}×${W} mm`,9,'#777'));}
 function downloadPDF(){const{jsPDF}=window.jspdf;const adv=getAdvancedSpec();const spec=calcSheet(S.L,S.W,S.H,S.boxType,adv);if(!spec)return;const{sw,sh}=spec;const margin=15;const doc=new jsPDF({unit:'mm',format:[sw+margin*2,sh+margin*2+30],orientation:'landscape'});doc.setFontSize(10);doc.setTextColor(50);doc.text(`ARQUETA FOLDING — ${S.boxType.toUpperCase()} — L${S.L}×W${S.W}×H${S.H} mm`,margin,8);doc.setFontSize(7);doc.text(`Hoja: ${Math.round(sw)}×${Math.round(sh)} mm${S.cvSource?' · Medido con OpenCV':''}`,margin,13);const svgEl2=document.getElementById('dieline');const svgData=new XMLSerializer().serializeToString(svgEl2);const canvas2=document.createElement('canvas');const scaleF=3;canvas2.width=svgEl2.getAttribute('width')*scaleF;canvas2.height=svgEl2.getAttribute('height')*scaleF;const ctx2=canvas2.getContext('2d');ctx2.fillStyle='#fff';ctx2.fillRect(0,0,canvas2.width,canvas2.height);const img2=new Image();const blob=new Blob([svgData],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);img2.onload=()=>{ctx2.drawImage(img2,0,0,canvas2.width,canvas2.height);const imgData=canvas2.toDataURL('image/png');doc.addImage(imgData,'PNG',margin,margin,sw,sh);doc.save(`troquel_${S.boxType}_L${S.L}W${S.W}H${S.H}.pdf`);URL.revokeObjectURL(url);};img2.src=url;}
 function copyDims(){const text=`L=${S.L}mm W=${S.W}mm H=${S.H}mm Tipo=${S.boxType}`;navigator.clipboard.writeText(text).then(()=>alert('Medidas copiadas: '+text));}
