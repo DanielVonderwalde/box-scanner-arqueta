@@ -101,12 +101,12 @@ input[type=file]{display:none}
 </div>
 <div class="app">
   <div class="card">
-    <div class="card-title">🔑 OpenRouter API Key</div>
+    <div class="card-title">🔑 Google AI Studio API Key</div>
     <div class="api-row">
-      <input type="password" id="apiKey" placeholder="sk-or-v1-..." oninput="onKeyInput()">
+      <input type="password" id="apiKey" placeholder="AIza..." oninput="onKeyInput()">
       <button class="btn btn-secondary" onclick="saveKey()">Guardar</button>
     </div>
-    <div class="api-hint">Gratis en <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> — sin tarjeta de crédito</div>
+    <div class="api-hint">Gratis en <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — sin tarjeta de crédito</div>
     <div class="api-saved" id="apiSaved">✓ API key guardada</div>
   </div>
   <div class="card">
@@ -232,9 +232,9 @@ const REF={none:null,card:{w:85.6,h:54,shape:'rect'},coin10:{w:28,h:28,shape:'ci
 let cvReady=false;
 function onOpenCvReady(){cvReady=true;S.cvReady=true;setStatus('ready','✓ OpenCV.js listo — medición de píxeles activada');document.getElementById('cvBadge').textContent='OpenCV ✓';}
 function setStatus(type,msg){const el=document.getElementById('cvStatus');el.className='cv-status '+type;const dot=type==='loading'?'<div class="cv-dot pulse"></div>':'<div class="cv-dot"></div>';el.innerHTML=dot+'<span>'+msg+'</span>';}
-(function loadKey(){try{const k=localStorage.getItem('or_key');if(k){S.key=k;document.getElementById('apiKey').value=k;document.getElementById('apiSaved').style.display='block';}}catch(e){}})();
+(function loadKey(){try{const k=localStorage.getItem('google_key');if(k){S.key=k;document.getElementById('apiKey').value=k;document.getElementById('apiSaved').style.display='block';}}catch(e){}})();
 function onKeyInput(){document.getElementById('apiSaved').style.display='none';}
-function saveKey(){S.key=document.getElementById('apiKey').value.trim();try{localStorage.setItem('or_key',S.key);}catch(e){}document.getElementById('apiSaved').style.display='block';}
+function saveKey(){S.key=document.getElementById('apiKey').value.trim();try{localStorage.setItem('google_key',S.key);}catch(e){}document.getElementById('apiSaved').style.display='block';}
 function setPhotoMode(m){S.photoMode=m;['Flat','Box'].forEach(x=>document.getElementById('mode'+x).classList.remove('active'));document.getElementById('mode'+(m==='flat'?'Flat':'Box')).classList.add('active');}
 function setRef(r){S.ref=r;['None','Card','Coin10','Coin1','Ruler','A4'].forEach(x=>{const el=document.getElementById('ref'+x);el.classList.remove('active','active-green');});document.getElementById('ref'+r.charAt(0).toUpperCase()+r.slice(1)).classList.add('active-green');if(S.photoDataURL&&cvReady)runOpenCV();}
 function onPhoto(evt){const file=evt.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{S.photoDataURL=e.target.result;const img=document.getElementById('photoImg');img.src=S.photoDataURL;img.style.display='block';document.getElementById('photoPlaceholder').style.display='none';document.getElementById('changeBtn').style.display='block';document.getElementById('photoZone').classList.add('has-photo');if(cvReady){runOpenCV();}else{setStatus('loading','⏳ OpenCV cargando…');}};reader.readAsDataURL(file);}
@@ -249,10 +249,10 @@ async function detectFromPhoto(){
     const refLabel={none:'no reference object visible',card:'a standard credit/debit card (85.6×54mm) is visible as reference',coin10:'a Mexican $10 coin (28mm diameter) is visible as reference',coin1:'a Mexican $1 coin (21mm diameter) is visible as reference',ruler:'a ruler is visible for scale reference',a4:'an A4 sheet (210×297mm) is visible as reference'}[S.ref];
     const scaleNote=S.mmPerPx?`OpenCV has already calibrated the scale at ${(1/S.mmPerPx).toFixed(2)} px/mm. Use this to improve your measurement.`:'No pixel calibration available.';
     const prompt=`You are a precision packaging engineer. Analyze this image of a cardboard box.\nContext: ${S.photoMode==='flat'?'The box is FLAT/UNFOLDED (a dieline layout).':'The box is ASSEMBLED (3D view).'}\nReference: ${refLabel}.\n${scaleNote}\n\nMEASUREMENT PROTOCOL:\n1. Locate the reference object\n2. Count exactly how many pixels wide it is\n3. Calculate mm_per_pixel = known_mm / pixel_count\n4. Measure each box dimension using that same scale\n5. Report pixel counts and calculations\n\nRespond ONLY with valid JSON:\n{\n  "L": <number, length in mm>,\n  "W": <number, width in mm>,\n  "H": <number, height in mm>,\n  "boxType": <"tuckS"|"tuckR"|"auto"|"glue"|"snap"|"tray">,\n  "notes": "<measurement details>",\n  "confidence": <0-1>\n}`;
-    const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+    const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',{
       method:'POST',
-      headers:{'Authorization':'Bearer '+S.key,'Content-Type':'application/json','HTTP-Referer':location.href,'X-Title':'Box Scanner Arqueta'},
-      body:JSON.stringify({model:'google/gemini-2.0-flash-exp:free',messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:S.photoDataURL,detail:'high'}}]}],max_tokens:400,response_format:{type:'json_object'}})
+      headers:{'Authorization':'Bearer '+S.key,'Content-Type':'application/json'},
+      body:JSON.stringify({model:'gemini-2.0-flash',messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:S.photoDataURL}}]}],max_tokens:400,response_format:{type:'json_object'}})
     });
     if(!resp.ok){const t=await resp.text();throw new Error(resp.status+': '+t);}
     const data=await resp.json();const json=JSON.parse(data.choices[0].message.content);
