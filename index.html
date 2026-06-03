@@ -1071,9 +1071,10 @@ function traceDownloadPDF() {
   const dimW = parseFloat(document.getElementById('tracePdfW').value) || null;
   const dimH = parseFloat(document.getElementById('tracePdfH').value) || null;
 
-  // Natural SVG pixel size
-  const svgPxW = parseFloat(svgEl.getAttribute('width'))  || svgEl.getBoundingClientRect().width  || 600;
-  const svgPxH = parseFloat(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height || 400;
+  // Get true SVG dimensions from viewBox (width attr is "100%")
+  const vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+  const svgPxW = (vb && vb.width)  ? vb.width  : (svgEl.getBoundingClientRect().width  || 600);
+  const svgPxH = (vb && vb.height) ? vb.height : (svgEl.getBoundingClientRect().height || 400);
   const aspect = svgPxW / svgPxH;
 
   // A4 landscape: 297 × 210 mm. Reserve right column if user entered dims.
@@ -1104,11 +1105,12 @@ function traceDownloadPDF() {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Fix svg viewBox if missing so drawImage scales correctly
-  if (!svgEl.getAttribute('viewBox')) {
-    svgEl.setAttribute('viewBox', `0 0 ${svgPxW} ${svgPxH}`);
-  }
-  const svgData = new XMLSerializer().serializeToString(svgEl);
+  // Clone SVG with explicit px dimensions so the browser renders it correctly
+  const svgClone = svgEl.cloneNode(true);
+  svgClone.setAttribute('width',  svgPxW);
+  svgClone.setAttribute('height', svgPxH);
+  if (!svgClone.getAttribute('viewBox')) svgClone.setAttribute('viewBox', `0 0 ${svgPxW} ${svgPxH}`);
+  const svgData = new XMLSerializer().serializeToString(svgClone);
   const blob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
   const img  = new Image();
   img.onload = () => {
