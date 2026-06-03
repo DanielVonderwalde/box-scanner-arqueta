@@ -219,7 +219,7 @@ input[type=file]{display:none}
   <!-- ── MANUAL TRACE CARD ── -->
   <div class="card" id="traceCard">
     <div class="card-title">✏️ Trazado Manual <span style="font-size:11px;background:#f472b6;color:#fff;padding:2px 8px;border-radius:20px;vertical-align:middle;font-weight:700">NUEVO</span></div>
-    <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Sube una foto y <b>dibuja el contorno completo</b> de la caja con el mouse o dedo. La app detecta los paneles, solapas y pestaña de pegue automáticamente.</p>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Sube una foto y <b>dibuja el contorno completo</b> de la caja con el mouse o dedo. El layout saldrá igual al trazado con las solapas y pestaña de pegue identificadas.</p>
 
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
       <!-- Canvas zone -->
@@ -235,25 +235,44 @@ input[type=file]{display:none}
         <input type="file" id="traceFileInput" accept="image/*" onchange="onTracePhoto(event)" style="display:none">
         <div class="btn-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
           <button class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('traceFileInput').click()">📷 Subir foto</button>
-          <button class="btn btn-secondary" style="font-size:12px" id="traceBtnAnalyze" onclick="traceAnalyze()" disabled>🔍 Analizar trazado</button>
+          <button class="btn btn-secondary" style="font-size:12px" id="traceBtnAnalyze" onclick="traceAnalyze()" disabled>🔍 Analizar</button>
+          <button class="btn btn-primary"   style="font-size:12px" id="traceBtnDieline" onclick="traceRenderDieline()" disabled>📐 Generar dieline</button>
           <button class="btn btn-secondary" style="font-size:12px" onclick="traceClear()">🗑 Limpiar</button>
         </div>
         <div id="traceHint" style="font-size:11px;color:#fbbf24;margin-top:8px;min-height:16px">Sube una foto y dibuja el contorno completo de la caja.</div>
       </div>
 
-      <!-- Segment analysis + inputs -->
-      <div style="flex:0 0 230px;display:flex;flex-direction:column;gap:12px">
-        <!-- Segment legend — filled dynamically by traceAnalyze() -->
+      <!-- Segment info + inputs -->
+      <div style="flex:0 0 220px;display:flex;flex-direction:column;gap:10px">
         <div id="traceSegInfo" style="display:none;font-size:11px;background:var(--surface2);border-radius:8px;padding:10px;line-height:2"></div>
         <div>
-          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">CONFIRMAR MEDIDAS (mm)</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:6px">MEDIDAS REALES (mm) — opcional</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
             <div class="dim-group" style="flex:unset"><label>Largo (L)</label><input type="number" id="traceL" placeholder="—" min="0" oninput="traceCheckReady()"></div>
             <div class="dim-group" style="flex:unset"><label>Ancho (W)</label><input type="number" id="traceW" placeholder="—" min="0" oninput="traceCheckReady()"></div>
-            <div class="dim-group" style="flex:unset"><label>Alto (H)</label><input type="number" id="traceH" placeholder="—" min="0" oninput="traceCheckReady()"></div>
+            <div class="dim-group" style="flex:unset"><label>Alto (H)</label> <input type="number" id="traceH" placeholder="—" min="0" oninput="traceCheckReady()"></div>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="traceGenerate()" id="traceBtnGenerate" disabled>📐 Generar Layout</button>
+        <button class="btn btn-green" onclick="traceGenerate()" id="traceBtnGenerate" disabled style="font-size:12px">📦 Usar medidas → Layout estándar</button>
+        <p style="font-size:10px;color:var(--muted);margin:0">Si no ingresas medidas, el dieline muestra la forma del trazado a escala de píxeles.</p>
+      </div>
+    </div>
+
+    <!-- Dieline output from trace -->
+    <div id="traceDielineWrap" style="display:none;margin-top:20px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">DIELINE DESDE TRAZADO</div>
+      <!-- Legend -->
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-bottom:10px">
+        <span><span style="color:#111;font-size:15px">—</span> Corte</span>
+        <span><span style="color:#2563eb;font-size:15px">- -</span> Doblez</span>
+        <span style="background:#f472b6;color:#fff;padding:1px 7px;border-radius:4px">Pestaña pegue</span>
+        <span style="background:rgba(251,191,36,0.25);border:1px solid #fbbf24;padding:1px 7px;border-radius:4px">Solapas</span>
+      </div>
+      <div class="dieline-wrap" style="background:#fff;border-radius:8px;overflow:hidden">
+        <svg id="traceDieline" xmlns="http://www.w3.org/2000/svg" width="100%"></svg>
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-secondary" onclick="traceDownloadSVG()">🖼 Descargar SVG</button>
       </div>
     </div>
   </div>
@@ -518,6 +537,7 @@ function traceAnalyze() {
   const pts = TR.simplPoly;
   if (pts.length < 4) { setTraceHint('Trazado insuficiente. Dibuja el contorno completo.', '#ef4444'); return; }
 
+  document.getElementById('traceBtnDieline').disabled = true;
   // ── 1. Build segment list ────────────────────────────────────────
   const segs = [];
   for (let i = 0; i < pts.length - 1; i++) {
@@ -678,7 +698,8 @@ function traceAnalyze() {
     <span style="color:#fb923c">■</span> <b>Biseles</b>: ${diagSegs.length} segmentos
   `;
 
-  // ── 8. Auto-fill mm fields ───────────────────────────────────────
+  // ── 8. Store segments & auto-fill mm fields ─────────────────────
+  TR.segs = segs; // save for dieline rendering
   const pxL = hGroups[0]?.mean || 0;
   const pxW = hGroups[1]?.mean || 0;
   const pxH = vGroups[0]?.mean || 0;
@@ -686,12 +707,196 @@ function traceAnalyze() {
     if (pxL) document.getElementById('traceL').value = Math.round(pxL * sc * S.mmPerPx);
     if (pxW) document.getElementById('traceW').value = Math.round(pxW * sc * S.mmPerPx);
     if (pxH) document.getElementById('traceH').value = Math.round(pxH * sc * S.mmPerPx);
-    setTraceHint('✓ Medidas auto-calculadas. Verifica y ajusta, luego genera el layout.', '#43e97b');
+    setTraceHint('✓ Listo. Pulsa "Generar dieline" para ver el layout desde el trazado.', '#43e97b');
   } else {
-    setTraceHint('Partes identificadas por color. Ingresa L, W y H en mm para generar el layout.', '#fbbf24');
+    setTraceHint('Partes identificadas. Pulsa "Generar dieline" para ver el layout.', '#43e97b');
   }
+  document.getElementById('traceBtnDieline').disabled = false;
   traceCheckReady();
 }
+
+// ── DIELINE FROM TRACE ─────────────────────────────────────────────
+function traceRenderDieline() {
+  const pts  = TR.simplPoly;
+  const segs = TR.segs;
+  if (!pts || pts.length < 4 || !segs) return;
+
+  const ns  = 'http://www.w3.org/2000/svg';
+  const PAD = 60, SVG_W = 860, SVG_H = 540;
+
+  // Bounding box of trace
+  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+  const bbX=Math.min(...xs), bbY=Math.min(...ys);
+  const bbW=Math.max(...xs)-bbX, bbH=Math.max(...ys)-bbY;
+  const sc = Math.min((SVG_W-PAD*2)/bbW, (SVG_H-PAD*2)/bbH) * 0.88;
+  const ox = PAD + (SVG_W-PAD*2 - bbW*sc)/2;
+  const oy = PAD + (SVG_H-PAD*2 - bbH*sc)/2;
+  const tx = x => ox + (x-bbX)*sc;
+  const ty = y => oy + (y-bbY)*sc;
+
+  const el = (tag, attrs, txt) => {
+    const e = document.createElementNS(ns, tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+    if (txt !== undefined) e.textContent = txt;
+    return e;
+  };
+
+  const svg = document.getElementById('traceDieline');
+  svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+  svg.innerHTML = '';
+  svg.appendChild(el('rect',{width:SVG_W,height:SVG_H,fill:'#ffffff'}));
+
+  // ── Filled regions ────────────────────────────────────────────────
+  // Glue tab: find segs with role glueTab and their connected neighbors
+  // to build a closed sub-polygon
+  const glueIdxs = segs.map((s,i)=>s.role==='glueTab'?i:-1).filter(i=>i>=0);
+  if (glueIdxs.length) {
+    // Walk a few segs around glue tab to build a closed fill polygon
+    const span  = 3; // segs on each side of glue tab to include in fill
+    const gi    = glueIdxs[0];
+    const fillPts = [];
+    for (let d=-span; d<=span+1; d++) {
+      const idx = (gi+d+segs.length)%segs.length;
+      fillPts.push(segs[idx].a);
+    }
+    const pStr = fillPts.map(p=>`${tx(p.x)},${ty(p.y)}`).join(' ');
+    svg.appendChild(el('polygon',{points:pStr,fill:'rgba(244,114,182,0.30)',stroke:'none'}));
+  }
+
+  // Flap fills (top/bottom solapas) – light yellow
+  const flapRoles = new Set(['flapEdge','flapH','ear']);
+  // Group consecutive flap-role segs into polygons
+  let inFlap=false, flapBuf=[];
+  const flushFlap = () => {
+    if (flapBuf.length>1) {
+      const fp = flapBuf.map(s=>s.a);
+      fp.push(flapBuf[flapBuf.length-1].b);
+      svg.appendChild(el('polygon',{
+        points:fp.map(p=>`${tx(p.x)},${ty(p.y)}`).join(' '),
+        fill:'rgba(251,191,36,0.15)',stroke:'none'}));
+    }
+    flapBuf=[];
+  };
+  for (const s of segs) {
+    if (flapRoles.has(s.role)) { inFlap=true; flapBuf.push(s); }
+    else { if(inFlap) flushFlap(); inFlap=false; }
+  }
+  if(inFlap) flushFlap();
+
+  // ── Fold lines (inferred at panel junctions) ──────────────────────
+  const foldXset=new Set(), foldYset=new Set();
+  for (let i=0; i<segs.length; i++) {
+    const cur  = segs[i];
+    const next = segs[(i+1)%segs.length];
+    // Vertical fold: H-seg meets V-seg between main panels
+    if (cur.type==='H' && next.type==='V' &&
+        ['panelL','panelW'].includes(cur.role) && next.role==='height') {
+      foldXset.add(Math.round(tx(cur.b.x)));
+    }
+    if (cur.type==='V' && next.type==='H' &&
+        cur.role==='height' && ['panelL','panelW'].includes(next.role)) {
+      foldXset.add(Math.round(tx(cur.b.x)));
+    }
+    // Horizontal fold: V-height meets H-flap
+    if (cur.type==='V' && next.type==='H' &&
+        cur.role==='height' && flapRoles.has(next.role)) {
+      foldYset.add(Math.round(ty(cur.b.y)));
+    }
+    if (cur.type==='H' && next.type==='V' &&
+        flapRoles.has(cur.role) && next.role==='height') {
+      foldYset.add(Math.round(ty(cur.b.y)));
+    }
+  }
+  const by1=oy, by2=oy+bbH*sc, bx1=ox, bx2=ox+bbW*sc;
+  foldXset.forEach(fx => svg.appendChild(el('line',
+    {x1:fx,y1:by1,x2:fx,y2:by2,stroke:'#2563eb','stroke-width':'1.2','stroke-dasharray':'5,3'})));
+  foldYset.forEach(fy => svg.appendChild(el('line',
+    {x1:bx1,y1:fy,x2:bx2,y2:fy,stroke:'#2563eb','stroke-width':'1.2','stroke-dasharray':'5,3'})));
+
+  // ── Outer boundary — cut lines ────────────────────────────────────
+  const polyPts = pts.slice(0,-1).map(p=>`${tx(p.x)},${ty(p.y)}`).join(' ');
+  svg.appendChild(el('polygon',{points:polyPts,fill:'none',stroke:'#111','stroke-width':'1.8'}));
+
+  // ── Glue tab border highlight ─────────────────────────────────────
+  for (const s of segs) {
+    if (s.role==='glueTab') {
+      svg.appendChild(el('line',{
+        x1:tx(s.a.x),y1:ty(s.a.y),x2:tx(s.b.x),y2:ty(s.b.y),
+        stroke:'#e11d48','stroke-width':'3'}));
+    }
+  }
+
+  // ── Dimension annotations ─────────────────────────────────────────
+  const zone=document.getElementById('traceZone');
+  const imgSc=(TR.imgNatW/zone.offsetWidth+TR.imgNatH/zone.offsetHeight)/2;
+  const mmPx = S.mmPerPx ? S.mmPerPx : null;
+  const fmtDim = (pxDist) => {
+    if (!pxDist) return '';
+    if (mmPx) return Math.round(pxDist*imgSc*mmPx)+' mm';
+    return Math.round(pxDist)+' px';
+  };
+
+  function dimArrowH(x1,x2,y,label,above) {
+    const yy=above?y-16:y+22;
+    svg.appendChild(el('line',{x1,y1:yy,x2,y2:yy,stroke:'#888','stroke-width':'1'}));
+    svg.appendChild(el('line',{x1,y1:yy-5,x2:x1,y2:yy+5,stroke:'#888','stroke-width':'1'}));
+    svg.appendChild(el('line',{x1:x2,y1:yy-5,x2:x2,y2:yy+5,stroke:'#888','stroke-width':'1'}));
+    if(label) {
+      const t=el('text',{x:(x1+x2)/2,y:yy+(above?-4:13),
+        'text-anchor':'middle','font-size':'11','font-family':'monospace',fill:'#555'},label);
+      svg.appendChild(t);
+    }
+  }
+  function dimArrowV(y1,y2,x,label) {
+    const xx=x+20;
+    svg.appendChild(el('line',{x1:xx,y1,x2:xx,y2,stroke:'#888','stroke-width':'1'}));
+    svg.appendChild(el('line',{x1:xx-5,y1:y1,x2:xx+5,y2:y1,stroke:'#888','stroke-width':'1'}));
+    svg.appendChild(el('line',{x1:xx-5,y1:y2,x2:xx+5,y2:y2,stroke:'#888','stroke-width':'1'}));
+    if(label){
+      const t=el('text',{x:xx+8,y:(y1+y2)/2+4,
+        'font-size':'11','font-family':'monospace',fill:'#555'},label);
+      svg.appendChild(t);
+    }
+  }
+
+  // Find representative L, H, W segments for dimension lines
+  const segL = segs.find(s=>s.role==='panelL');
+  const segH = segs.find(s=>s.role==='height');
+  const segW = segs.find(s=>s.role==='panelW');
+  const segG = segs.find(s=>s.role==='glueTab');
+  const segF = segs.find(s=>s.role==='flapH'||s.role==='flapEdge');
+
+  if (segL) dimArrowH(tx(segL.a.x),tx(segL.b.x),Math.min(ty(segL.a.y),ty(segL.b.y)), 'L '+fmtDim(segL.len), true);
+  if (segH) dimArrowV(ty(segH.a.y),ty(segH.b.y),tx(Math.max(segH.a.x,segH.b.x)), 'H '+fmtDim(segH.len));
+  if (segW) dimArrowH(tx(segW.a.x),tx(segW.b.x),Math.max(ty(segW.a.y),ty(segW.b.y)), 'W '+fmtDim(segW.len), false);
+  if (segG) dimArrowH(tx(segG.a.x),tx(segG.b.x),Math.max(ty(segG.a.y),ty(segG.b.y)), 'PEG '+fmtDim(segG.len), false);
+
+  // ── Part labels on shape ──────────────────────────────────────────
+  function labelSeg(s, txt, color) {
+    const mx=(tx(s.a.x)+tx(s.b.x))/2, my=(ty(s.a.y)+ty(s.b.y))/2;
+    const bg=el('rect',{x:mx-22,y:my-8,width:44,height:14,rx:3,fill:color+'22'});
+    const t =el('text',{x:mx,y:my+4,'text-anchor':'middle','font-size':'9',
+      'font-family':'monospace',fill:color,fontWeight:'bold'},txt);
+    svg.appendChild(bg); svg.appendChild(t);
+  }
+  segs.forEach(s => {
+    const MAP = {panelL:['PANEL L','#ff6b6b'],panelW:['PANEL W','#a78bfa'],
+      glueTab:['PEGUE','#e11d48'],flapEdge:['SOLAPA','#15803d'],
+      flapH:['SOL-H','#059669'],ear:['OREJA','#2563eb'],height:['H','#b45309'],bevel:['BIS','#ea580c']};
+    if (MAP[s.role] && s.len > 20) labelSeg(s, ...MAP[s.role]);
+  });
+
+  document.getElementById('traceDielineWrap').style.display='block';
+  setTimeout(()=>document.getElementById('traceDielineWrap').scrollIntoView({behavior:'smooth'}),100);
+}
+
+function traceDownloadSVG() {
+  const svg = document.getElementById('traceDieline');
+  const blob = new Blob([svg.outerHTML], {type:'image/svg+xml'});
+  const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'dieline-trazado.svg'});
+  a.click();
+}
+// ── END DIELINE FROM TRACE ─────────────────────────────────────────
 
 function onTracePhoto(evt) {
   const file = evt.target.files[0];
@@ -729,11 +934,13 @@ function traceInitCanvas() {
 }
 
 function traceClear() {
-  TR.rawPath = []; TR.simplPoly = []; TR.segments = []; TR.drawing = false;
+  TR.rawPath = []; TR.simplPoly = []; TR.segments = []; TR.segs = []; TR.drawing = false;
   const canvas = document.getElementById('traceCanvas');
   if (canvas.getContext) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   document.getElementById('traceSegInfo').style.display = 'none';
+  document.getElementById('traceDielineWrap').style.display = 'none';
   document.getElementById('traceBtnAnalyze').disabled = true;
+  document.getElementById('traceBtnDieline').disabled = true;
   document.getElementById('traceBtnGenerate').disabled = true;
   ['traceL','traceW','traceH'].forEach(id => document.getElementById(id).value = '');
   setTraceHint(TR.hasPhoto ? 'Dibuja el contorno completo de la caja con el mouse o dedo.' : 'Sube una foto y dibuja el contorno completo de la caja.', '#fbbf24');
