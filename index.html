@@ -1068,58 +1068,87 @@ function traceDownloadPDF() {
   const svgEl = document.getElementById('traceDieline');
   if (!svgEl) return;
 
-  const pdfW = parseFloat(document.getElementById('tracePdfW').value) || null;
-  const pdfH = parseFloat(document.getElementById('tracePdfH').value) || null;
+  const dimW = parseFloat(document.getElementById('tracePdfW').value) || null;
+  const dimH = parseFloat(document.getElementById('tracePdfH').value) || null;
 
-  // Page size: dieline + right margin for dimension label
-  const svgW = parseFloat(svgEl.getAttribute('width')) || 400;
-  const svgH = parseFloat(svgEl.getAttribute('height')) || 300;
-  const margin = 14;
-  const labelCol = pdfW || pdfH ? 52 : 0; // extra column on the right for dims
-  const pageW = svgW + margin * 2 + labelCol;
-  const pageH = svgH + margin * 2 + 18;
+  // Natural SVG pixel size
+  const svgPxW = parseFloat(svgEl.getAttribute('width'))  || svgEl.getBoundingClientRect().width  || 600;
+  const svgPxH = parseFloat(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height || 400;
+  const aspect = svgPxW / svgPxH;
 
-  const doc = new jsPDF({unit:'mm', format:[pageW, pageH], orientation: pageW > pageH ? 'landscape' : 'portrait'});
+  // A4 landscape: 297 × 210 mm. Reserve right column if user entered dims.
+  const margin   = 12;
+  const colW     = dimW || dimH ? 48 : 0;
+  const pageW    = 297; // A4 landscape width
+  const pageH    = 210;
+  const drawableW = pageW - margin * 2 - colW;
+  const drawableH = pageH - margin * 2 - 10; // 10 for header
+
+  // Fit dieline into drawable area keeping aspect ratio
+  let fitW = drawableW;
+  let fitH = fitW / aspect;
+  if (fitH > drawableH) { fitH = drawableH; fitW = fitH * aspect; }
+
+  const doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
 
   // Header
-  doc.setFontSize(8); doc.setTextColor(80);
-  doc.text('ARQUETA — DIELINE DESDE TRAZADO', margin, 7);
+  doc.setFontSize(8); doc.setTextColor(60);
+  doc.text('ARQUETA — DIELINE DESDE TRAZADO', margin, margin - 2);
 
-  // Render SVG to canvas then into PDF
-  const svgData = new XMLSerializer().serializeToString(svgEl);
+  // Render SVG → canvas at high resolution preserving aspect
+  const scaleF = 4;
   const canvas = document.createElement('canvas');
-  const scaleF = 3;
-  canvas.width  = svgW * scaleF;
-  canvas.height = svgH * scaleF;
+  canvas.width  = Math.round(svgPxW * scaleF);
+  canvas.height = Math.round(svgPxH * scaleF);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const img = new Image();
-  const blob = new Blob([svgData], {type:'image/svg+xml'});
+
+  // Fix svg viewBox if missing so drawImage scales correctly
+  if (!svgEl.getAttribute('viewBox')) {
+    svgEl.setAttribute('viewBox', `0 0 ${svgPxW} ${svgPxH}`);
+  }
+  const svgData = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+  const img  = new Image();
   img.onload = () => {
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     const imgData = canvas.toDataURL('image/png');
-    doc.addImage(imgData, 'PNG', margin, margin, svgW, svgH);
 
-    // Dimension label on the right
-    if (pdfW || pdfH) {
-      const lx = margin + svgW + 6;
-      const ly = margin + svgH / 2 - 16;
+    // Center dieline vertically in drawable area
+    const drawX = margin;
+    const drawY = margin + 4 + (drawableH - fitH) / 2;
+    doc.addImage(imgData, 'PNG', drawX, drawY, fitW, fitH);
+
+    // Dimension panel on the right
+    if (dimW || dimH) {
+      const px = pageW - margin - colW + 3;
+      const py = margin + 4;
+      const ph = drawableH;
       doc.setFillColor(243, 232, 255);
-      doc.roundedRect(lx, ly, labelCol - 8, 32, 3, 3, 'F');
-      doc.setFontSize(7); doc.setTextColor(100, 60, 180);
-      doc.text('MEDIDAS HOJA', lx + (labelCol-8)/2, ly + 6, {align:'center'});
-      if (pdfW) {
-        doc.setFontSize(13); doc.setTextColor(80, 30, 160);
-        doc.text(`${pdfW} mm`, lx + (labelCol-8)/2, ly + 15, {align:'center'});
-        doc.setFontSize(7); doc.setTextColor(120);
-        doc.text('largo', lx + (labelCol-8)/2, ly + 19, {align:'center'});
+      doc.roundedRect(px, py, colW - 3, ph, 3, 3, 'F');
+
+      doc.setFontSize(6.5); doc.setTextColor(100, 60, 180);
+      doc.text('MEDIDAS', px + (colW-3)/2, py + 7, {align:'center'});
+      doc.text('CONTORNO', px + (colW-3)/2, py + 11, {align:'center'});
+
+      let ty = py + 22;
+      if (dimW) {
+        doc.setFontSize(6); doc.setTextColor(130, 90, 200);
+        doc.text('ANCHO', px + (colW-3)/2, ty, {align:'center'});
+        doc.setFontSize(16); doc.setTextColor(60, 20, 140);
+        doc.text(`${dimW}`, px + (colW-3)/2, ty + 9, {align:'center'});
+        doc.setFontSize(7); doc.setTextColor(100, 60, 180);
+        doc.text('mm', px + (colW-3)/2, ty + 14, {align:'center'});
+        ty += 26;
       }
-      if (pdfH) {
-        doc.setFontSize(13); doc.setTextColor(80, 30, 160);
-        doc.text(`${pdfH} mm`, lx + (labelCol-8)/2, ly + 26, {align:'center'});
-        doc.setFontSize(7); doc.setTextColor(120);
-        doc.text('alto', lx + (labelCol-8)/2, ly + 30, {align:'center'});
+      if (dimH) {
+        doc.setFontSize(6); doc.setTextColor(130, 90, 200);
+        doc.text('ALTO', px + (colW-3)/2, ty, {align:'center'});
+        doc.setFontSize(16); doc.setTextColor(60, 20, 140);
+        doc.text(`${dimH}`, px + (colW-3)/2, ty + 9, {align:'center'});
+        doc.setFontSize(7); doc.setTextColor(100, 60, 180);
+        doc.text('mm', px + (colW-3)/2, ty + 14, {align:'center'});
       }
     }
 
