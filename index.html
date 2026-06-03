@@ -109,14 +109,14 @@ input[type=file]{display:none}
 
       <!-- Diagram 1: A4 sheet -->
       <div style="flex:1;min-width:260px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#43e97b;margin-bottom:6px">OPCIÓN 1 — HOJA A4 (más precisa)</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#43e97b;margin-bottom:6px">OPCIÓN 1 — HOJA CARTA (más precisa)</div>
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 300 200" style="border-radius:10px;background:#0f1117;display:block">
           <rect width="300" height="200" fill="#0f1117" rx="10"/>
           <text x="150" y="16" text-anchor="middle" font-size="9" fill="#4a5568" font-family="monospace">Vista cenital — mesa oscura</text>
           <!-- A4 -->
           <rect x="14" y="26" width="62" height="88" rx="3" fill="#1e2535" stroke="#43e97b" stroke-width="2"/>
-          <text x="45" y="55" text-anchor="middle" font-size="8" fill="#43e97b" font-family="monospace" font-weight="bold">HOJA A4</text>
-          <text x="45" y="67" text-anchor="middle" font-size="7" fill="#43e97b" font-family="monospace">210×297mm</text>
+          <text x="45" y="55" text-anchor="middle" font-size="8" fill="#43e97b" font-family="monospace" font-weight="bold">HOJA CARTA</text>
+          <text x="45" y="67" text-anchor="middle" font-size="7" fill="#43e97b" font-family="monospace">215×280mm</text>
           <text x="45" y="79" text-anchor="middle" font-size="7" fill="#43e97b" font-family="monospace">referencia</text>
           <!-- gap -->
           <line x1="78" y1="70" x2="96" y2="70" stroke="#6c63ff" stroke-width="1" stroke-dasharray="3,2"/>
@@ -195,7 +195,7 @@ input[type=file]{display:none}
       </li>
       <li>
         <b style="color:#43e97b">Coloca la referencia al lado de la caja</b><br>
-        <span style="color:var(--muted);font-size:12px"><b>Hoja A4</b> (más precisa) o <b>tarjeta de crédito</b>. Deja 2-3 cm de separación. Ambas completamente <b>planas</b>, sin doblar ni encimar.</span>
+        <span style="color:var(--muted);font-size:12px"><b>Hoja Carta</b> (más precisa) o <b>tarjeta de crédito</b>. Deja 2-3 cm de separación. Ambas completamente <b>planas</b>, sin doblar ni encimar.</span>
       </li>
       <li>
         <b style="color:#ff6b6b">Caja abierta y extendida</b><br>
@@ -210,7 +210,7 @@ input[type=file]{display:none}
         <span style="color:var(--muted);font-size:12px">Luz de ventana lateral. El flash crea reflejos que borran los bordes.</span>
       </li>
       <li>
-        <b>En la app:</b> selecciona <b>"Hoja A4"</b> o <b>"Tarjeta"</b> como referencia → sube la foto → <b>📷 Detectar medidas</b> → verifica y ajusta → <b>📐 Generar Layout</b>.
+        <b>En la app:</b> selecciona <b>"Hoja Carta"</b> o <b>"Tarjeta"</b> como referencia → sube la foto → <b>📷 Detectar medidas</b> → verifica y ajusta → <b>📐 Generar Layout</b>.
       </li>
     </ol>
   </div>
@@ -256,7 +256,7 @@ input[type=file]{display:none}
             <div class="pill" id="refCoin10" onclick="setRef('coin10')">🪙 Moneda $10 (28mm)</div>
             <div class="pill" id="refCoin1" onclick="setRef('coin1')">🪙 Moneda $1 (21mm)</div>
             <div class="pill" id="refRuler" onclick="setRef('ruler')">📐 Regla visible</div>
-            <div class="pill" id="refA4" onclick="setRef('a4')">📄 Hoja A4 (210×297mm)</div>
+            <div class="pill" id="refA4" onclick="setRef('a4')">📄 Hoja Carta (215×280mm)</div>
           </div>
         </div>
         <div class="btn-row" style="flex-wrap:wrap;gap:8px">
@@ -343,7 +343,7 @@ input[type=file]{display:none}
 </div>
 <script>
 const S={key:'',photoDataURL:null,photoMode:'flat',ref:'none',boxType:'tuckS',L:0,W:0,H:0,detected:false,cvReady:false,cvSource:false,mmPerPx:null,advOpen:false};
-const REF={none:null,card:{w:85.6,h:54,shape:'rect'},coin10:{w:28,h:28,shape:'circle'},coin1:{w:21,h:21,shape:'circle'},a4:{w:210,h:297,shape:'rect'},ruler:{w:null,h:null,shape:'ruler'}};
+const REF={none:null,card:{w:85.6,h:54,shape:'rect'},coin10:{w:28,h:28,shape:'circle'},coin1:{w:21,h:21,shape:'circle'},a4:{w:215,h:280,shape:'rect'},ruler:{w:null,h:null,shape:'ruler'}};
 let cvReady=false;
 function onOpenCvReady(){cvReady=true;S.cvReady=true;setStatus('ready','✓ OpenCV.js listo — medición de píxeles activada');document.getElementById('cvBadge').textContent='OpenCV ✓';}
 function setStatus(type,msg){const el=document.getElementById('cvStatus');el.className='cv-status '+type;const dot=type==='loading'?'<div class="cv-dot pulse"></div>':'<div class="cv-dot"></div>';el.innerHTML=dot+'<span>'+msg+'</span>';}
@@ -654,7 +654,7 @@ function runOpenCV() {
           detailMsg += ` · <span style="color:#f472b6">⚠ W no medible en foto 3D — ingresa manualmente</span>`;
         }
         if (refShape) {
-          const rn = {card:'Tarjeta',coin10:'Moneda $10',coin1:'Moneda $1',a4:'Hoja A4'}[S.ref]||S.ref;
+          const rn = {card:'Tarjeta',coin10:'Moneda $10',coin1:'Moneda $1',a4:'Hoja Carta'}[S.ref]||S.ref;
           detailMsg = `<b>Ref (${rn}):</b> ${refShape.bRect.width}×${refShape.bRect.height} px · ` + detailMsg;
         }
         showDetectedDims(S.L, Wmm, S.H, true);
