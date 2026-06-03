@@ -282,76 +282,6 @@ input[type=file]{display:none}
   </div>
   <!-- ── END MANUAL TRACE CARD ── -->
 
-  <!-- ── REFERENCIA DE HOJA ── -->
-  <div class="card" id="sheetRefCard">
-    <div class="card-title">📏 Referencia de Hoja</div>
-
-    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
-
-      <!-- columna izquierda: medidas manuales -->
-      <div style="flex:1;min-width:260px">
-        <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Ingresa medidas de hoja para generar un rectángulo de referencia.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div class="dim-group" style="flex:unset">
-            <label>Largo total (mm)</label>
-            <input type="number" id="refSheetW" placeholder="ej. 450" min="1" oninput="sheetRefUpdate()">
-          </div>
-          <div class="dim-group" style="flex:unset">
-            <label>Alto total (mm)</label>
-            <input type="number" id="refSheetH" placeholder="ej. 300" min="1" oninput="sheetRefUpdate()">
-          </div>
-          <div class="dim-group" style="flex:unset">
-            <label>Etiqueta (opcional)</label>
-            <input type="text" id="refSheetLabel" placeholder="ej. CAJA KORES" oninput="sheetRefUpdate()" style="width:130px">
-          </div>
-        </div>
-        <div id="sheetRefPreviewWrap" style="display:none;margin-top:14px">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">VISTA PREVIA — REFERENCIA</div>
-          <div style="background:#fff;border-radius:8px;overflow:hidden;padding:10px;display:inline-block;max-width:100%">
-            <svg id="sheetRefSvg" xmlns="http://www.w3.org/2000/svg"></svg>
-          </div>
-          <div class="btn-row" style="margin-top:8px;gap:8px">
-            <button class="btn btn-secondary" style="font-size:12px" onclick="sheetRefDownloadSVG()">🖼 Descargar SVG</button>
-            <button class="btn btn-secondary" style="font-size:12px" onclick="sheetRefDownloadPDF()">📄 Descargar PDF</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- columna derecha: layout generado -->
-      <div style="flex:1;min-width:260px">
-        <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Layout generado en la sección de Troquel.</p>
-        <div id="layoutRefDims" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">MEDIDAS DE HOJA</div>
-          <div style="display:flex;gap:24px;flex-wrap:wrap">
-            <div>
-              <div style="font-size:10px;color:var(--muted)">Largo total</div>
-              <div id="layoutRefW" style="font-size:22px;font-weight:800;color:#60a5fa">—</div>
-              <div style="font-size:10px;color:var(--muted)">mm</div>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--muted)">Alto total</div>
-              <div id="layoutRefH" style="font-size:22px;font-weight:800;color:#60a5fa">—</div>
-              <div style="font-size:10px;color:var(--muted)">mm</div>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--muted)">Caja</div>
-              <div id="layoutRefBox" style="font-size:12px;font-weight:700;color:#a5b4fc;margin-top:4px">—</div>
-            </div>
-          </div>
-        </div>
-        <div id="layoutRefNone" style="font-size:12px;color:var(--muted)">Genera un layout primero en la sección de Troquel.</div>
-        <div id="layoutRefBtns" style="display:none">
-          <div class="btn-row" style="gap:8px">
-            <button class="btn btn-secondary" style="font-size:12px" onclick="layoutRefDownloadSVG()">🖼 Descargar SVG del layout</button>
-            <button class="btn btn-secondary" style="font-size:12px" onclick="downloadPDF()">📄 Descargar PDF del layout</button>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-  <!-- ── END REFERENCIA DE HOJA ── -->
-
   <div class="card">
     <div class="card-title">📐 Foto + Medidas exactas <span class="badge badge-green" id="cvBadge">OpenCV</span></div>
     <div id="cvStatus" class="cv-status loading"><div class="cv-dot pulse"></div><span>Cargando OpenCV.js para medición precisa…</span></div>
@@ -471,10 +401,27 @@ input[type=file]{display:none}
   <div class="card" id="dielineCard" style="display:none">
     <div class="card-title">TROQUEL LINEAL</div>
     <div class="dieline-wrap"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
-    <div class="btn-row" style="margin-top:12px">
-      <button class="btn btn-secondary" onclick="copyDims()">📋 Copiar medidas</button>
-      <button class="btn btn-secondary" onclick="downloadSVG()">🖼 Descargar SVG</button>
-      <button class="btn btn-green" onclick="downloadPDF()">📄 Descargar PDF</button>
+    <div style="margin-top:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <!-- medidas de hoja -->
+      <div style="display:flex;gap:12px;align-items:flex-end;background:var(--surface2);border-radius:10px;padding:8px 16px">
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">LARGO HOJA</div>
+          <div id="dielineSwLabel" style="font-size:26px;font-weight:800;color:#a78bfa;line-height:1">—</div>
+          <div style="font-size:9px;color:var(--muted)">mm</div>
+        </div>
+        <div style="font-size:20px;color:var(--muted);padding-bottom:6px">×</div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">ALTO HOJA</div>
+          <div id="dielineShLabel" style="font-size:26px;font-weight:800;color:#a78bfa;line-height:1">—</div>
+          <div style="font-size:9px;color:var(--muted)">mm</div>
+        </div>
+      </div>
+      <!-- botones -->
+      <div class="btn-row" style="flex:1;gap:8px">
+        <button class="btn btn-secondary" onclick="copyDims()">📋 Copiar medidas</button>
+        <button class="btn btn-secondary" onclick="downloadSVG()">🖼 Descargar SVG</button>
+        <button class="btn btn-green" onclick="downloadPDF()">📄 Descargar PDF</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1186,12 +1133,11 @@ function sheetRefDownloadPDF() {
   img.src = URL.createObjectURL(blob);
 }
 function layoutRefUpdate(sw, sh, L, W, H) {
-  document.getElementById('layoutRefNone').style.display = 'none';
-  document.getElementById('layoutRefDims').style.display = 'block';
-  document.getElementById('layoutRefBtns').style.display = 'block';
-  document.getElementById('layoutRefW').textContent = Math.round(sw);
-  document.getElementById('layoutRefH').textContent = Math.round(sh);
-  document.getElementById('layoutRefBox').textContent = `L${L} × W${W} × H${H} mm`;
+  // medidas junto al troquel
+  const _sw = document.getElementById('dielineSwLabel');
+  const _sh = document.getElementById('dielineShLabel');
+  if (_sw) _sw.textContent = Math.round(sw);
+  if (_sh) _sh.textContent = Math.round(sh);
 }
 
 function layoutRefDownloadSVG() {
@@ -1849,6 +1795,8 @@ function renderDieline(){
   document.getElementById('dielineCard').style.display='block';
   const _rsTW=document.getElementById('resTotalW'); if(_rsTW) _rsTW.textContent=Math.round(sw);
   const _rsTH=document.getElementById('resTotalH'); if(_rsTH) _rsTH.textContent=Math.round(sh);
+  const _sw=document.getElementById('dielineSwLabel'); if(_sw) _sw.textContent=Math.round(sw);
+  const _sh=document.getElementById('dielineShLabel'); if(_sh) _sh.textContent=Math.round(sh);
 }
 
 function renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv){
