@@ -215,6 +215,62 @@ input[type=file]{display:none}
     </ol>
   </div>
   <!-- ── END PHOTO GUIDE ── -->
+
+  <!-- ── MANUAL TRACE CARD ── -->
+  <div class="card" id="traceCard">
+    <div class="card-title">✏️ Trazado Manual <span style="font-size:11px;background:#f472b6;color:#fff;padding:2px 8px;border-radius:20px;vertical-align:middle;font-weight:700">NUEVO</span></div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Sube una foto, haz clic en las <b>4 esquinas</b> de la caja para trazar el contorno, ingresa L y H reales, y genera el layout.</p>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <!-- Canvas zone -->
+      <div style="flex:1;min-width:280px">
+        <div id="traceZone" style="position:relative;border:2px dashed var(--border);border-radius:10px;overflow:hidden;cursor:crosshair;background:#0a0e1a;min-height:220px;display:flex;align-items:center;justify-content:center" onclick="traceClick(event)">
+          <div id="tracePlaceholder" style="text-align:center;color:var(--muted);pointer-events:none">
+            <div style="font-size:32px">✏️</div>
+            <div style="font-size:13px;margin-top:6px">Sube una foto para trazar</div>
+          </div>
+          <img id="traceImg" style="display:none;width:100%;height:auto;display:block;pointer-events:none">
+          <canvas id="traceCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+        </div>
+        <input type="file" id="traceFileInput" accept="image/*" onchange="onTracePhoto(event)" style="display:none">
+        <div class="btn-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('traceFileInput').click()">📷 Subir foto</button>
+          <button class="btn btn-secondary" style="font-size:12px" onclick="traceUndo()">↩ Deshacer</button>
+          <button class="btn btn-secondary" style="font-size:12px" onclick="traceClear()">🗑 Limpiar</button>
+        </div>
+        <div id="traceHint" style="font-size:11px;color:#fbbf24;margin-top:8px;min-height:16px">Sube una foto y haz clic en las 4 esquinas del box.</div>
+      </div>
+
+      <!-- Inputs + result -->
+      <div style="flex:0 0 220px;display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">MEDIDAS REALES (mm)</div>
+          <div class="dim-row" style="flex-direction:column;gap:8px">
+            <div class="dim-group" style="flex:unset">
+              <label>Largo (L)</label>
+              <input type="number" id="traceL" placeholder="—" min="0" oninput="traceUpdateDims()">
+            </div>
+            <div class="dim-group" style="flex:unset">
+              <label>Alto (H)</label>
+              <input type="number" id="traceH" placeholder="—" min="0" oninput="traceUpdateDims()">
+            </div>
+            <div class="dim-group" style="flex:unset">
+              <label>Ancho (W)</label>
+              <input type="number" id="traceW" placeholder="—" min="0" oninput="traceUpdateDims()">
+            </div>
+          </div>
+        </div>
+        <div id="tracePxInfo" style="display:none;font-size:11px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:8px">
+          <b style="color:var(--text)">Trazado detectado:</b><br>
+          <span id="tracePxL">—</span> px largo<br>
+          <span id="tracePxH">—</span> px alto
+        </div>
+        <button class="btn btn-primary" onclick="traceGenerate()" id="traceBtnGenerate" disabled>📐 Generar Layout</button>
+      </div>
+    </div>
+  </div>
+  <!-- ── END MANUAL TRACE CARD ── -->
+
   <div class="card">
     <div class="card-title">📐 Foto + Medidas exactas <span class="badge badge-green" id="cvBadge">OpenCV</span></div>
     <div id="cvStatus" class="cv-status loading"><div class="cv-dot pulse"></div><span>Cargando OpenCV.js para medición precisa…</span></div>
@@ -348,6 +404,199 @@ let cvReady=false;
 function onOpenCvReady(){cvReady=true;S.cvReady=true;setStatus('ready','✓ OpenCV.js listo — medición de píxeles activada');document.getElementById('cvBadge').textContent='OpenCV ✓';}
 function setStatus(type,msg){const el=document.getElementById('cvStatus');el.className='cv-status '+type;const dot=type==='loading'?'<div class="cv-dot pulse"></div>':'<div class="cv-dot"></div>';el.innerHTML=dot+'<span>'+msg+'</span>';}
 function setPhotoMode(m){S.photoMode=m;['Flat','Box'].forEach(x=>document.getElementById('mode'+x).classList.remove('active'));document.getElementById('mode'+(m==='flat'?'Flat':'Box')).classList.add('active');}
+// ── MANUAL TRACE TOOL ──────────────────────────────────────────
+const TR = { points: [], imgW: 0, imgH: 0, imgNatW: 0, imgNatH: 0 };
+
+function onTracePhoto(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('traceImg');
+    img.onload = () => {
+      TR.imgNatW = img.naturalWidth;
+      TR.imgNatH = img.naturalHeight;
+      img.style.display = 'block';
+      document.getElementById('tracePlaceholder').style.display = 'none';
+      traceClear();
+      traceResize();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function traceResize() {
+  const zone = document.getElementById('traceZone');
+  const canvas = document.getElementById('traceCanvas');
+  canvas.width  = zone.offsetWidth;
+  canvas.height = zone.offsetHeight;
+  TR.imgW = zone.offsetWidth;
+  TR.imgH = zone.offsetHeight;
+  traceDraw();
+}
+
+function traceClick(evt) {
+  const img = document.getElementById('traceImg');
+  if (img.style.display === 'none' || !img.src) return;
+  if (TR.points.length >= 4) return;
+  const zone = document.getElementById('traceZone');
+  const rect  = zone.getBoundingClientRect();
+  const x = evt.clientX - rect.left;
+  const y = evt.clientY - rect.top;
+  TR.points.push({ x, y });
+  traceDraw();
+  traceUpdateHint();
+  if (TR.points.length === 4) traceCalcDims();
+}
+
+function traceDraw() {
+  const canvas = document.getElementById('traceCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (TR.points.length === 0) return;
+
+  const pts = TR.points;
+  // Draw filled semi-transparent polygon when complete
+  if (pts.length === 4) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(108,99,255,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#6c63ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Draw dimension lines
+    ctx.setLineDash([5, 3]);
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 1.5;
+    // Bottom line (L)
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    // Draw lines between placed points
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = '#6c63ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Draw corner dots + labels
+  const labels = ['1 (esq sup-izq)', '2 (esq sup-der)', '3 (esq inf-der)', '4 (esq inf-izq)'];
+  const colors  = ['#43e97b','#43e97b','#ff6b6b','#ff6b6b'];
+  pts.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
+    ctx.fillStyle = colors[i] || '#6c63ff';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i+1, p.x, p.y);
+    // Label
+    ctx.fillStyle = colors[i] || '#6c63ff';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(labels[i], p.x + 10, p.y - 6);
+  });
+}
+
+function traceCalcDims() {
+  const pts = TR.points;
+  if (pts.length < 4) return;
+  // Use average of opposite sides for robustness
+  const dist = (a, b) => Math.sqrt((b.x-a.x)**2 + (b.y-a.y)**2);
+  const pxTop    = dist(pts[0], pts[1]);
+  const pxBottom = dist(pts[3], pts[2]);
+  const pxLeft   = dist(pts[0], pts[3]);
+  const pxRight  = dist(pts[1], pts[2]);
+  const pxL = Math.round((pxTop + pxBottom) / 2);
+  const pxH = Math.round((pxLeft + pxRight) / 2);
+
+  document.getElementById('tracePxL').textContent = pxL;
+  document.getElementById('tracePxH').textContent = pxH;
+  document.getElementById('tracePxInfo').style.display = 'block';
+
+  // If mmPerPx is calibrated from the CV card, auto-fill
+  if (S.mmPerPx) {
+    const scaleX = TR.imgNatW / TR.imgW;
+    const scaleY = TR.imgNatH / TR.imgH;
+    const avgScale = (scaleX + scaleY) / 2;
+    document.getElementById('traceL').value = Math.round(pxL * avgScale * S.mmPerPx);
+    document.getElementById('traceH').value = Math.round(pxH * avgScale * S.mmPerPx);
+    document.getElementById('traceHint').textContent = '✓ Medidas auto-calculadas con escala de referencia. Verifica y ajusta.';
+    document.getElementById('traceHint').style.color = '#43e97b';
+  } else {
+    document.getElementById('traceHint').textContent = 'Trazado completo. Ingresa L y H reales en mm.';
+    document.getElementById('traceHint').style.color = '#fbbf24';
+  }
+  traceUpdateDims();
+}
+
+function traceUpdateDims() {
+  const L = parseFloat(document.getElementById('traceL').value) || 0;
+  const H = parseFloat(document.getElementById('traceH').value) || 0;
+  const W = parseFloat(document.getElementById('traceW').value) || 0;
+  const ready = TR.points.length === 4 && L > 0 && H > 0 && W > 0;
+  document.getElementById('traceBtnGenerate').disabled = !ready;
+}
+
+function traceGenerate() {
+  const L = parseFloat(document.getElementById('traceL').value) || 0;
+  const W = parseFloat(document.getElementById('traceW').value) || 0;
+  const H = parseFloat(document.getElementById('traceH').value) || 0;
+  if (!L || !W || !H) { alert('Ingresa L, W y H en mm para generar el layout.'); return; }
+  document.getElementById('manL').value = L;
+  document.getElementById('manW').value = W;
+  document.getElementById('manH').value = H;
+  S.L = L; S.W = W; S.H = H;
+  showDetectedDims(L, W, H, false);
+  renderDieline();
+  // Scroll to layout
+  setTimeout(() => document.getElementById('dielineCard').scrollIntoView({ behavior: 'smooth' }), 100);
+}
+
+function traceUndo() {
+  TR.points.pop();
+  document.getElementById('tracePxInfo').style.display = 'none';
+  document.getElementById('traceBtnGenerate').disabled = true;
+  traceDraw();
+  traceUpdateHint();
+}
+
+function traceClear() {
+  TR.points = [];
+  const canvas = document.getElementById('traceCanvas');
+  const ctx = canvas.getContext('2d');
+  if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('tracePxInfo').style.display = 'none';
+  document.getElementById('traceBtnGenerate').disabled = true;
+  document.getElementById('traceHint').textContent = 'Sube una foto y haz clic en las 4 esquinas del box.';
+  document.getElementById('traceHint').style.color = '#fbbf24';
+}
+
+function traceUpdateHint() {
+  const n = TR.points.length;
+  const msgs = [
+    'Haz clic en la esquina superior-izquierda del box.',
+    'Ahora clic en la esquina superior-derecha.',
+    'Ahora clic en la esquina inferior-derecha.',
+    'Ahora clic en la esquina inferior-izquierda.',
+    '✓ 4 esquinas marcadas. Ingresa L, W y H reales en mm.',
+  ];
+  document.getElementById('traceHint').textContent = msgs[n] || msgs[4];
+  document.getElementById('traceHint').style.color = n === 4 ? '#43e97b' : '#fbbf24';
+}
+
+window.addEventListener('resize', () => { if (document.getElementById('traceImg').src) traceResize(); });
+// ── END MANUAL TRACE TOOL ───────────────────────────────────────
+
 function setRef(r){S.ref=r;['None','Card','Coin10','Coin1','Ruler','A4'].forEach(x=>{const el=document.getElementById('ref'+x);el.classList.remove('active','active-green');});document.getElementById('ref'+r.charAt(0).toUpperCase()+r.slice(1)).classList.add('active-green');if(S.photoDataURL&&cvReady)runOpenCV();}
 function onPhoto(evt){const file=evt.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{S.photoDataURL=e.target.result;const img=document.getElementById('photoImg');img.src=S.photoDataURL;img.style.display='block';document.getElementById('photoPlaceholder').style.display='none';document.getElementById('changeBtn').style.display='block';document.getElementById('btnDetect').style.display='inline-flex';document.getElementById('cvConfirmBanner').style.display='none';document.getElementById('photoZone').classList.add('has-photo');if(cvReady){runOpenCV();}else{setStatus('loading','⏳ OpenCV cargando…');}};reader.readAsDataURL(file);}
 
