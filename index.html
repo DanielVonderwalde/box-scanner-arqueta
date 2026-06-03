@@ -81,7 +81,7 @@ input[type=file]{display:none}
 .adv-field input:focus,.adv-field select:focus{outline:none;border-color:var(--accent)}
 .adv-toggle{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-top:4px}
 .adv-toggle:hover{color:var(--text)}
-.dieline-wrap{background:#fff;border-radius:var(--radius);overflow:hidden}
+.dieline-wrap{background:#fff;border-radius:var(--radius);overflow:auto}
 .dieline-wrap svg{display:block;width:100%;height:auto}
 .loading-bar{display:none;align-items:center;gap:10px;padding:12px 16px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.3);border-radius:8px;color:var(--accent);font-size:13px}
 .loading-bar.show{display:flex}
@@ -97,18 +97,124 @@ input[type=file]{display:none}
 <body>
 <div class="header">
   <div class="logo">ARQUETA FOLDING<span>ARTE EMPACADO</span></div>
-  <div class="header-title">📐 Box Scanner<small>Foto + medidas → troquel → PDF profesional</small></div>
+  <div class="header-title">📐 Box Scanner<small>Foto + medidas → troquel → PDF / SVG profesional</small></div>
 </div>
 <div class="app">
+  <!-- ── PHOTO GUIDE CARD ── -->
   <div class="card">
-    <div class="card-title">🔑 Google AI Studio API Key</div>
-    <div class="api-row">
-      <input type="password" id="apiKey" placeholder="AIza..." oninput="onKeyInput()">
-      <button class="btn btn-secondary" onclick="saveKey()">Guardar</button>
+    <div class="card-title">📸 Cómo tomar la foto para medición exacta</div>
+
+    <!-- Two diagrams side by side: A4 and credit card -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px">
+
+      <!-- Diagram 1: A4 sheet -->
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#43e97b;margin-bottom:6px">OPCIÓN 1 — HOJA A4 (más precisa)</div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 300 200" style="border-radius:10px;background:#0f1117;display:block">
+          <rect width="300" height="200" fill="#0f1117" rx="10"/>
+          <text x="150" y="16" text-anchor="middle" font-size="9" fill="#4a5568" font-family="monospace">Vista cenital — mesa oscura</text>
+          <!-- A4 -->
+          <rect x="14" y="26" width="62" height="88" rx="3" fill="#1e2535" stroke="#43e97b" stroke-width="2"/>
+          <text x="45" y="55" text-anchor="middle" font-size="8" fill="#43e97b" font-family="monospace" font-weight="bold">HOJA A4</text>
+          <text x="45" y="67" text-anchor="middle" font-size="7" fill="#43e97b" font-family="monospace">210×297mm</text>
+          <text x="45" y="79" text-anchor="middle" font-size="7" fill="#43e97b" font-family="monospace">referencia</text>
+          <!-- gap -->
+          <line x1="78" y1="70" x2="96" y2="70" stroke="#6c63ff" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="87" y="65" text-anchor="middle" font-size="7" fill="#6c63ff" font-family="monospace">2-3cm</text>
+          <!-- box -->
+          <rect x="98" y="26" width="186" height="88" rx="3" fill="#1a1f2e" stroke="#ff6b6b" stroke-width="2"/>
+          <line x1="135" y1="26" x2="135" y2="114" stroke="#60a5fa" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="210" y1="26" x2="210" y2="114" stroke="#60a5fa" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="191" y="65" text-anchor="middle" font-size="8" fill="#ff6b6b" font-family="monospace" font-weight="bold">CAJA PLANA</text>
+          <text x="191" y="77" text-anchor="middle" font-size="7" fill="#ff6b6b" font-family="monospace">troquel abierto</text>
+          <!-- L arrow -->
+          <line x1="98" y1="122" x2="284" y2="122" stroke="#ff6b6b" stroke-width="1"/>
+          <text x="191" y="131" text-anchor="middle" font-size="7" fill="#ff6b6b" font-family="monospace">← L (largo) →</text>
+          <!-- H arrow -->
+          <line x1="292" y1="26" x2="292" y2="114" stroke="#fbbf24" stroke-width="1"/>
+          <text x="298" y="75" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="monospace" transform="rotate(90,298,75)">H</text>
+          <!-- camera -->
+          <rect x="126" y="144" width="20" height="14" rx="3" fill="none" stroke="#6c63ff" stroke-width="1.5"/>
+          <circle cx="136" cy="151" r="4" fill="none" stroke="#6c63ff" stroke-width="1.2"/>
+          <text x="136" y="170" text-anchor="middle" font-size="8" fill="#6c63ff" font-family="monospace">cámara arriba ↓</text>
+          <!-- no flash -->
+          <line x1="222" y1="144" x2="234" y2="156" stroke="#ef4444" stroke-width="2"/>
+          <line x1="222" y1="156" x2="234" y2="144" stroke="#ef4444" stroke-width="2"/>
+          <text x="228" y="168" text-anchor="middle" font-size="7" fill="#ef4444" font-family="monospace">sin flash</text>
+          <!-- checkmark -->
+          <text x="14" y="193" font-size="8" fill="#43e97b" font-family="monospace">✓ Mejor precisión · Fácil de detectar</text>
+        </svg>
+      </div>
+
+      <!-- Diagram 2: Credit card -->
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#fbbf24;margin-bottom:6px">OPCIÓN 2 — TARJETA DE CRÉDITO (85.6×54mm)</div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 300 200" style="border-radius:10px;background:#0f1117;display:block">
+          <rect width="300" height="200" fill="#0f1117" rx="10"/>
+          <text x="150" y="16" text-anchor="middle" font-size="9" fill="#4a5568" font-family="monospace">Vista cenital — mesa oscura</text>
+          <!-- Credit card -->
+          <rect x="14" y="42" width="72" height="46" rx="5" fill="#1e2535" stroke="#fbbf24" stroke-width="2"/>
+          <!-- card chip -->
+          <rect x="22" y="52" width="14" height="10" rx="2" fill="#fbbf24" opacity="0.5"/>
+          <!-- card stripe -->
+          <line x1="14" y1="57" x2="86" y2="57" stroke="#fbbf24" stroke-width="3" opacity="0.15"/>
+          <text x="50" y="79" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="monospace">85.6×54mm</text>
+          <text x="50" y="98" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="monospace">tarjeta plana</text>
+          <!-- gap -->
+          <line x1="88" y1="65" x2="106" y2="65" stroke="#6c63ff" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="97" y="60" text-anchor="middle" font-size="7" fill="#6c63ff" font-family="monospace">2-3cm</text>
+          <!-- box -->
+          <rect x="108" y="26" width="176" height="88" rx="3" fill="#1a1f2e" stroke="#ff6b6b" stroke-width="2"/>
+          <line x1="143" y1="26" x2="143" y2="114" stroke="#60a5fa" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="214" y1="26" x2="214" y2="114" stroke="#60a5fa" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="196" y="65" text-anchor="middle" font-size="8" fill="#ff6b6b" font-family="monospace" font-weight="bold">CAJA PLANA</text>
+          <text x="196" y="77" text-anchor="middle" font-size="7" fill="#ff6b6b" font-family="monospace">troquel abierto</text>
+          <!-- L arrow -->
+          <line x1="108" y1="122" x2="284" y2="122" stroke="#ff6b6b" stroke-width="1"/>
+          <text x="196" y="131" text-anchor="middle" font-size="7" fill="#ff6b6b" font-family="monospace">← L (largo) →</text>
+          <!-- camera -->
+          <rect x="126" y="144" width="20" height="14" rx="3" fill="none" stroke="#6c63ff" stroke-width="1.5"/>
+          <circle cx="136" cy="151" r="4" fill="none" stroke="#6c63ff" stroke-width="1.2"/>
+          <text x="136" y="170" text-anchor="middle" font-size="8" fill="#6c63ff" font-family="monospace">cámara arriba ↓</text>
+          <!-- no flash -->
+          <line x1="222" y1="144" x2="234" y2="156" stroke="#ef4444" stroke-width="2"/>
+          <line x1="222" y1="156" x2="234" y2="144" stroke="#ef4444" stroke-width="2"/>
+          <text x="228" y="168" text-anchor="middle" font-size="7" fill="#ef4444" font-family="monospace">sin flash</text>
+          <!-- warning -->
+          <text x="14" y="193" font-size="8" fill="#fbbf24" font-family="monospace">⚠ Tarjeta debe ser más pequeña que la caja</text>
+        </svg>
+      </div>
     </div>
-    <div class="api-hint">Gratis en <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — sin tarjeta de crédito</div>
-    <div class="api-saved" id="apiSaved">✓ API key guardada</div>
+
+    <!-- Steps -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);margin-bottom:10px">PASOS</div>
+    <ol style="margin:0;padding-left:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;font-size:13px;color:var(--text)">
+      <li>
+        <b style="color:#43e97b">Mesa oscura</b><br>
+        <span style="color:var(--muted);font-size:12px">Fondo negro o azul marino. El contraste ayuda a detectar los bordes.</span>
+      </li>
+      <li>
+        <b style="color:#43e97b">Coloca la referencia al lado de la caja</b><br>
+        <span style="color:var(--muted);font-size:12px"><b>Hoja A4</b> (más precisa) o <b>tarjeta de crédito</b>. Deja 2-3 cm de separación. Ambas completamente <b>planas</b>, sin doblar ni encimar.</span>
+      </li>
+      <li>
+        <b style="color:#ff6b6b">Caja abierta y extendida</b><br>
+        <span style="color:var(--muted);font-size:12px">Abre el troquel por completo hasta que quede plano. Así se miden L y H directamente.</span>
+      </li>
+      <li>
+        <b style="color:#6c63ff">Cámara perpendicular — directo hacia abajo</b><br>
+        <span style="color:var(--muted);font-size:12px">Sin ángulo. Si la cámara está inclinada las medidas se distorsionan.</span>
+      </li>
+      <li>
+        <b style="color:#fbbf24">Luz difusa — sin flash</b><br>
+        <span style="color:var(--muted);font-size:12px">Luz de ventana lateral. El flash crea reflejos que borran los bordes.</span>
+      </li>
+      <li>
+        <b>En la app:</b> selecciona <b>"Hoja A4"</b> o <b>"Tarjeta"</b> como referencia → sube la foto → <b>📷 Detectar medidas</b> → verifica y ajusta → <b>📐 Generar Layout</b>.
+      </li>
+    </ol>
   </div>
+  <!-- ── END PHOTO GUIDE ── -->
   <div class="card">
     <div class="card-title">📐 Foto + Medidas exactas <span class="badge badge-green" id="cvBadge">OpenCV</span></div>
     <div id="cvStatus" class="cv-status loading"><div class="cv-dot pulse"></div><span>Cargando OpenCV.js para medición precisa…</span></div>
@@ -132,11 +238,14 @@ input[type=file]{display:none}
       </div>
       <div style="display:flex;flex-direction:column;gap:14px">
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:1px">📏 MEDIDAS MANUALES (mm)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:1px">📏 MEDIDAS DE LA CAJA (mm)</div>
           <div class="dim-row">
             <div class="dim-group"><label>Largo (L)</label><input type="number" id="manL" placeholder="—" min="0" oninput="onDimChange()"></div>
             <div class="dim-group"><label>Ancho (W)</label><input type="number" id="manW" placeholder="—" min="0" oninput="onDimChange()"></div>
             <div class="dim-group"><label>Alto (H)</label><input type="number" id="manH" placeholder="—" min="0" oninput="onDimChange()"></div>
+          </div>
+          <div id="cvConfirmBanner" style="display:none;margin-top:8px;padding:8px 12px;border-radius:8px;background:rgba(67,233,123,0.12);border:1px solid #43e97b;font-size:12px;color:#43e97b">
+            ✓ Medidas detectadas desde foto — verifica y ajusta si es necesario antes de generar.
           </div>
         </div>
         <div>
@@ -150,21 +259,26 @@ input[type=file]{display:none}
             <div class="pill" id="refA4" onclick="setRef('a4')">📄 Hoja A4 (210×297mm)</div>
           </div>
         </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="analyze()" id="btnAnalyze">🔍 Generar Layout</button>
-          <button class="btn btn-secondary" onclick="detectFromPhoto()" id="btnDetect">📷 Detectar medidas</button>
+        <div class="btn-row" style="flex-wrap:wrap;gap:8px">
+          <button class="btn btn-secondary" onclick="detectFromPhoto()" id="btnDetect" style="display:none">📷 Detectar medidas</button>
+          <button class="btn btn-primary" onclick="generateLayout()" id="btnAnalyze">📐 Generar Layout</button>
         </div>
       </div>
     </div>
     <div class="loading-bar" id="loadingBar"><div class="spinner"></div><span id="loadingMsg">Analizando foto con IA…</span></div>
     <div class="error-box" id="errorBox"></div>
     <div id="resultsSection" style="display:none;margin-top:14px">
-      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">MEDIDAS DETECTADAS</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">MEDIDAS DE LA CAJA</div>
       <div class="result-row">
         <div class="result-box" id="resLBox"><div class="label">Largo L</div><div class="value" id="resL">—</div><div class="unit">mm</div></div>
         <div class="result-box" id="resWBox"><div class="label">Ancho W</div><div class="value" id="resW">—</div><div class="unit">mm</div></div>
         <div class="result-box" id="resHBox"><div class="label">Alto H</div><div class="value" id="resH">—</div><div class="unit">mm</div></div>
-        <div class="result-box" id="resSheetBox"><div class="label">Hoja total</div><div class="value" id="resSheet" style="font-size:13px">—</div><div class="unit">ancho × alto</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin:12px 0 8px">LARGO TOTAL DE HOJA (troquel plano)</div>
+      <div class="result-row">
+        <div class="result-box" style="flex:2;border-color:#6c63ff"><div class="label">Largo total</div><div class="value" id="resTotalW" style="color:#a78bfa;font-size:22px">—</div><div class="unit">mm</div></div>
+        <div class="result-box" style="flex:2;border-color:#6c63ff"><div class="label">Alto total</div><div class="value" id="resTotalH" style="color:#a78bfa;font-size:22px">—</div><div class="unit">mm</div></div>
+        <div class="result-box" style="flex:3"><div class="label">Fórmula largo</div><div class="value" id="resFormula" style="font-size:11px;line-height:1.5;color:var(--muted)">—</div></div>
       </div>
       <div class="cv-detail" id="cvDetail" style="display:none"></div>
     </div>
@@ -222,6 +336,7 @@ input[type=file]{display:none}
     <div class="dieline-wrap"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
     <div class="btn-row" style="margin-top:12px">
       <button class="btn btn-secondary" onclick="copyDims()">📋 Copiar medidas</button>
+      <button class="btn btn-secondary" onclick="downloadSVG()">🖼 Descargar SVG</button>
       <button class="btn btn-green" onclick="downloadPDF()">📄 Descargar PDF</button>
     </div>
   </div>
@@ -232,38 +347,457 @@ const REF={none:null,card:{w:85.6,h:54,shape:'rect'},coin10:{w:28,h:28,shape:'ci
 let cvReady=false;
 function onOpenCvReady(){cvReady=true;S.cvReady=true;setStatus('ready','✓ OpenCV.js listo — medición de píxeles activada');document.getElementById('cvBadge').textContent='OpenCV ✓';}
 function setStatus(type,msg){const el=document.getElementById('cvStatus');el.className='cv-status '+type;const dot=type==='loading'?'<div class="cv-dot pulse"></div>':'<div class="cv-dot"></div>';el.innerHTML=dot+'<span>'+msg+'</span>';}
-(function loadKey(){try{const k=localStorage.getItem('google_key');if(k){S.key=k;document.getElementById('apiKey').value=k;document.getElementById('apiSaved').style.display='block';}}catch(e){}})();
-function onKeyInput(){document.getElementById('apiSaved').style.display='none';}
-function saveKey(){S.key=document.getElementById('apiKey').value.trim();try{localStorage.setItem('google_key',S.key);}catch(e){}document.getElementById('apiSaved').style.display='block';}
 function setPhotoMode(m){S.photoMode=m;['Flat','Box'].forEach(x=>document.getElementById('mode'+x).classList.remove('active'));document.getElementById('mode'+(m==='flat'?'Flat':'Box')).classList.add('active');}
 function setRef(r){S.ref=r;['None','Card','Coin10','Coin1','Ruler','A4'].forEach(x=>{const el=document.getElementById('ref'+x);el.classList.remove('active','active-green');});document.getElementById('ref'+r.charAt(0).toUpperCase()+r.slice(1)).classList.add('active-green');if(S.photoDataURL&&cvReady)runOpenCV();}
-function onPhoto(evt){const file=evt.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{S.photoDataURL=e.target.result;const img=document.getElementById('photoImg');img.src=S.photoDataURL;img.style.display='block';document.getElementById('photoPlaceholder').style.display='none';document.getElementById('changeBtn').style.display='block';document.getElementById('photoZone').classList.add('has-photo');if(cvReady){runOpenCV();}else{setStatus('loading','⏳ OpenCV cargando…');}};reader.readAsDataURL(file);}
-function runOpenCV(){if(!S.photoDataURL||!cvReady)return;setStatus('loading','🔍 OpenCV analizando imagen…');const img=new Image();img.onload=()=>{try{const canvas=document.getElementById('cvCanvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);canvas.style.display='none';const src=cv.imread(canvas);const gray=new cv.Mat();const blur=new cv.Mat();const edges=new cv.Mat();const contours=new cv.MatVector();const hierarchy=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);cv.Canny(blur,edges,50,150);const kernel=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3));const dilated=new cv.Mat();cv.dilate(edges,dilated,kernel);cv.findContours(dilated,contours,hierarchy,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);const rects=[];for(let i=0;i<contours.size();i++){const cnt=contours.get(i);const rect=cv.boundingRect(cnt);const area=rect.width*rect.height;const imgArea=canvas.width*canvas.height;if(area>imgArea*0.005&&area<imgArea*0.98){const peri=cv.arcLength(cnt,true);const approx=new cv.Mat();cv.approxPolyDP(cnt,approx,0.02*peri,true);rects.push({rect,area,corners:approx.rows,cnt:i});approx.delete();}cnt.delete();}rects.sort((a,b)=>b.area-a.area);let refRect=null;let mmPerPx=null;const refSpec=REF[S.ref];if(refSpec&&refSpec.shape==='rect'){const targetAR=refSpec.w/refSpec.h;for(const r of rects){const ar=r.rect.width/r.rect.height;const bestAR=Math.min(Math.abs(ar-targetAR)/targetAR,Math.abs((1/ar)-targetAR)/targetAR);if(bestAR<0.15){refRect=r.rect;mmPerPx=Math.max(refSpec.w,refSpec.h)/Math.max(r.rect.width,r.rect.height);break;}}}else if(refSpec&&refSpec.shape==='circle'){for(const r of rects){if(Math.abs(r.rect.width/r.rect.height-1)<0.2){refRect=r.rect;mmPerPx=refSpec.w/Math.max(r.rect.width,r.rect.height);break;}}}S.mmPerPx=mmPerPx;S.cvSource=mmPerPx!==null;const overlay=document.getElementById('cvOverlay');const iw=canvas.width,ih=canvas.height;overlay.setAttribute('viewBox',`0 0 ${iw} ${ih}`);overlay.setAttribute('preserveAspectRatio','xMidYMid meet');overlay.style.display='block';overlay.innerHTML='';rects.slice(0,5).forEach((r,idx)=>{overlay.appendChild(svgRect(r.rect.x,r.rect.y,r.rect.width,r.rect.height,idx===0?'#6c63ff':'#4a4a7a',idx===0?0.5:0.2));});if(refRect){const rEl=svgRect(refRect.x,refRect.y,refRect.width,refRect.height,'#43e97b',1);rEl.setAttribute('stroke-width','3');overlay.appendChild(rEl);const txt=document.createElementNS('http://www.w3.org/2000/svg','text');txt.setAttribute('x',refRect.x+4);txt.setAttribute('y',refRect.y-4);txt.setAttribute('fill','#43e97b');txt.setAttribute('font-size',Math.max(14,iw*0.02));txt.setAttribute('font-family','monospace');txt.textContent='REF '+(1/mmPerPx).toFixed(2)+'px/mm';overlay.appendChild(txt);}let boxRect=null;for(const r of rects){if(refRect&&rectsOverlap(r.rect,refRect)>0.5)continue;if(r.area>(canvas.width*canvas.height*0.03)){boxRect=r.rect;break;}}if(boxRect){const bEl=svgRect(boxRect.x,boxRect.y,boxRect.width,boxRect.height,'#ff6b6b',1);bEl.setAttribute('stroke-width','3');overlay.appendChild(bEl);}let detailMsg='';if(mmPerPx&&boxRect){const Lmm=Math.round(boxRect.width*mmPerPx);const Hmm=Math.round(boxRect.height*mmPerPx);S.L=Lmm;S.H=Hmm;detailMsg=`<b>Escala:</b> ${(1/mmPerPx).toFixed(2)} px/mm · <b>Caja:</b> ${boxRect.width}×${boxRect.height} px → ${Lmm}×${Hmm} mm`;if(refRect){const rn={card:'Tarjeta',coin10:'Moneda $10',coin1:'Moneda $1',a4:'Hoja A4'}[S.ref]||S.ref;detailMsg=`<b>Ref (${rn}):</b> ${refRect.width}×${refRect.height} px · `+detailMsg;}showDetectedDims(S.L,S.W||Math.round(S.L*0.3),S.H,true);document.getElementById('cvDetail').innerHTML=detailMsg;document.getElementById('cvDetail').style.display='block';setStatus('ready',`✓ OpenCV: escala calibrada — ${(1/mmPerPx).toFixed(2)} px/mm`);}else if(mmPerPx){detailMsg=`Referencia calibrada: ${(1/mmPerPx).toFixed(2)} px/mm. Sin contorno claro — ingresa medidas manualmente.`;document.getElementById('cvDetail').innerHTML=detailMsg;document.getElementById('cvDetail').style.display='block';setStatus('ready',`✓ OpenCV listo — ${(1/mmPerPx).toFixed(2)} px/mm`);}else{setStatus('ready','✓ OpenCV activo · Sin referencia — precisión basada en IA');}src.delete();gray.delete();blur.delete();edges.delete();dilated.delete();kernel.delete();contours.delete();hierarchy.delete();}catch(err){console.error('OpenCV error:',err);setStatus('error','⚠ OpenCV error: '+err.message);}};img.src=S.photoDataURL;}
+function onPhoto(evt){const file=evt.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{S.photoDataURL=e.target.result;const img=document.getElementById('photoImg');img.src=S.photoDataURL;img.style.display='block';document.getElementById('photoPlaceholder').style.display='none';document.getElementById('changeBtn').style.display='block';document.getElementById('btnDetect').style.display='inline-flex';document.getElementById('cvConfirmBanner').style.display='none';document.getElementById('photoZone').classList.add('has-photo');if(cvReady){runOpenCV();}else{setStatus('loading','⏳ OpenCV cargando…');}};reader.readAsDataURL(file);}
+
+// --- Detect W from vertical fold lines in a flat dieline photo ---
+function detectWidthFromFlatDieline(edgesMat, imgWidth, boxRect, mmPerPx) {
+  const edgeData = edgesMat.data;
+  const proj = new Float32Array(boxRect.width);
+  for (let row = boxRect.y; row < boxRect.y + boxRect.height; row++) {
+    for (let col = boxRect.x; col < boxRect.x + boxRect.width; col++) {
+      proj[col - boxRect.x] += edgeData[row * imgWidth + col];
+    }
+  }
+  // 7-pixel moving-average smooth
+  const smooth = new Float32Array(proj.length);
+  const hw = 3;
+  for (let i = 0; i < proj.length; i++) {
+    let sum = 0, cnt = 0;
+    for (let j = Math.max(0,i-hw); j <= Math.min(proj.length-1,i+hw); j++){sum+=proj[j];cnt++;}
+    smooth[i] = sum / cnt;
+  }
+  const maxVal = Math.max(...smooth);
+  if (!maxVal) return null;
+  // Find peaks inside outer 5% margin
+  const margin   = Math.round(boxRect.width * 0.05);
+  const threshold = maxVal * 0.25;
+  const minDist   = Math.round(boxRect.width * 0.04);
+  const peaks = [];
+  for (let i = margin; i < smooth.length - margin; i++) {
+    if (smooth[i] >= threshold && smooth[i] >= smooth[i-1] && smooth[i] >= smooth[i+1]) {
+      if (!peaks.length || i - peaks[peaks.length-1] >= minDist) {
+        peaks.push(i);
+      } else if (smooth[i] > smooth[peaks[peaks.length-1]]) {
+        peaks[peaks.length-1] = i; // keep stronger peak
+      }
+    }
+  }
+  if (peaks.length < 2) return null;
+  // Column widths between consecutive boundaries (including box edges)
+  const bounds = [0, ...peaks, boxRect.width];
+  const cols = [];
+  for (let i = 0; i < bounds.length-1; i++) cols.push(bounds[i+1]-bounds[i]);
+  if (cols.length < 3) return null;
+  // Drop the smallest column (glue tab) if we have ≥5 columns
+  const sorted = [...cols].sort((a,b) => a-b);
+  const candidates = cols.length >= 5 ? sorted.slice(1) : sorted;
+  // Find the pair of most similar widths — those are the W (side) panels
+  let bestPair = null, bestScore = Infinity;
+  for (let i = 0; i < candidates.length; i++) {
+    for (let j = i+1; j < candidates.length; j++) {
+      const diff = Math.abs(candidates[i]-candidates[j]);
+      const avg  = (candidates[i]+candidates[j])/2;
+      if (diff/avg < 0.2 && diff < bestScore) {
+        bestScore = diff;
+        bestPair = [candidates[i], candidates[j]];
+      }
+    }
+  }
+  if (!bestPair) return null;
+  const wPx = (bestPair[0]+bestPair[1])/2;
+  const Wmm = Math.round(wPx * mmPerPx);
+  if (Wmm < 5 || Wmm > 500) return null;
+  return Wmm;
+}
+
+// Extract all significant contours from an edge image and return sorted shape descriptors
+function extractShapes(gray, imgArea) {
+  const blur    = new cv.Mat();
+  const edges   = new cv.Mat();
+  const closed  = new cv.Mat();
+  const contours = new cv.MatVector();
+  const hier    = new cv.Mat();
+
+  // Bilateral filter preserves edges better than Gaussian
+  cv.GaussianBlur(gray, blur, new cv.Size(5,5), 0);
+
+  // Otsu threshold drives Canny — far more reliable than mean brightness
+  const otsuMask = new cv.Mat();
+  const otsuThresh = cv.threshold(blur, otsuMask, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+  otsuMask.delete();
+  const hi = Math.min(255, Math.round(otsuThresh));
+  const lo = Math.max(0,   Math.round(hi * 0.5));  // Canny ratio 1:2
+  cv.Canny(blur, edges, lo, hi);
+
+  // Close small gaps in edges so broken rectangles connect
+  const kClose = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5,5));
+  cv.morphologyEx(edges, closed, cv.MORPH_CLOSE, kClose);
+  kClose.delete();
+
+  // Also dilate slightly for contour finding
+  const kDil = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3,3));
+  const dilated = new cv.Mat();
+  cv.dilate(closed, dilated, kDil);
+  kDil.delete();
+
+  cv.findContours(dilated, contours, hier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  const shapes = [];
+  for (let i = 0; i < contours.size(); i++) {
+    const cnt  = contours.get(i);
+    const area = cv.contourArea(cnt);
+    if (area > imgArea * 0.003 && area < imgArea * 0.97) {
+      const peri     = cv.arcLength(cnt, true);
+      const approx   = new cv.Mat();
+      // Two passes: tight (0.02) for clean rect, loose (0.05) for approximate
+      cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+      const corners  = approx.rows;
+      approx.delete();
+      const rotRect  = cv.minAreaRect(cnt);
+      const bRect    = cv.boundingRect(cnt);
+      const rW = rotRect.size.width, rH = rotRect.size.height;
+      // Solidity = contour area / convex hull area (near 1 = convex/rectangular)
+      const hull = new cv.Mat();
+      cv.convexHull(cnt, hull);
+      const hullArea = cv.contourArea(hull);
+      hull.delete();
+      const solidity = hullArea > 0 ? area / hullArea : 0;
+      shapes.push({ bRect, rotW: rW, rotH: rH, area, corners, solidity });
+    }
+    cnt.delete();
+  }
+
+  blur.delete(); edges.delete(); closed.delete(); dilated.delete();
+  contours.delete(); hier.delete();
+  shapes.sort((a,b) => b.area - a.area);
+  return shapes;
+}
+
+// Score how well a shape matches a rectangular reference object
+function refScore(shape, targetAR, imgArea) {
+  const rLong  = Math.max(shape.rotW, shape.rotH);
+  const rShort = Math.min(shape.rotW, shape.rotH);
+  if (rShort === 0) return Infinity;
+  const ar     = rLong / rShort;
+  const arErr  = Math.abs(ar - targetAR) / targetAR;
+  if (arErr > 0.20) return Infinity;       // aspect ratio must be close
+  // Prefer 4-corner shapes and high solidity; penalize non-rectangles
+  const cornerPenalty = Math.abs(shape.corners - 4) * 0.05;
+  const solidPenalty  = (1 - shape.solidity) * 0.3;
+  // Prefer refs that are a reasonable fraction of the image (0.5%–25%)
+  const fracPenalty   = (shape.area / imgArea < 0.005 || shape.area / imgArea > 0.25) ? 0.5 : 0;
+  return arErr + cornerPenalty + solidPenalty + fracPenalty;
+}
+
+function runOpenCV() {
+  if (!S.photoDataURL || !cvReady) return;
+  setStatus('loading','🔍 OpenCV analizando imagen…');
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const canvas = document.getElementById('cvCanvas');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      canvas.style.display = 'none';
+
+      const src  = cv.imread(canvas);
+      const gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+      const imgArea = canvas.width * canvas.height;
+      const shapes  = extractShapes(gray, imgArea);
+
+      // --- Reference detection ---
+      let refShape = null, mmPerPx = null;
+      const refSpec = REF[S.ref];
+      if (refSpec && refSpec.shape === 'rect') {
+        const targetAR = Math.max(refSpec.w, refSpec.h) / Math.min(refSpec.w, refSpec.h);
+        let bestScore = Infinity;
+        for (const r of shapes) {
+          const score = refScore(r, targetAR, imgArea);
+          if (score < bestScore) { bestScore = score; refShape = r; }
+        }
+        if (bestScore > 0.35) refShape = null; // no acceptable match
+        if (refShape) {
+          const rLong = Math.max(refShape.rotW, refShape.rotH);
+          mmPerPx = Math.max(refSpec.w, refSpec.h) / rLong;
+        }
+      } else if (refSpec && refSpec.shape === 'circle') {
+        for (const r of shapes) {
+          const ar = Math.max(r.rotW,r.rotH) / Math.min(r.rotW,r.rotH);
+          if (ar < 1.25 && r.area/imgArea > 0.003 && r.area/imgArea < 0.15) {
+            refShape = r;
+            mmPerPx  = refSpec.w / Math.max(r.rotW, r.rotH);
+            break;
+          }
+        }
+      }
+      S.mmPerPx = mmPerPx;
+      S.cvSource = mmPerPx !== null;
+
+      // --- Overlay drawing ---
+      const overlay = document.getElementById('cvOverlay');
+      const iw = canvas.width, ih = canvas.height;
+      overlay.setAttribute('viewBox', `0 0 ${iw} ${ih}`);
+      overlay.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      overlay.style.display = 'block';
+      overlay.innerHTML = '';
+      // Draw top candidate shapes (dim)
+      shapes.slice(0,8).forEach((r,idx) => {
+        if (idx === 0) return; // skip largest (usually whole-scene bounding box)
+        const el = svgRect(r.bRect.x,r.bRect.y,r.bRect.width,r.bRect.height,'#4a4a7a',0.2);
+        overlay.appendChild(el);
+      });
+      if (refShape) {
+        const rEl = svgRect(refShape.bRect.x, refShape.bRect.y, refShape.bRect.width, refShape.bRect.height, '#43e97b', 1);
+        rEl.setAttribute('stroke-width','4');
+        overlay.appendChild(rEl);
+        const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+        txt.setAttribute('x', refShape.bRect.x+4);
+        txt.setAttribute('y', Math.max(20, refShape.bRect.y-6));
+        txt.setAttribute('fill','#43e97b');
+        txt.setAttribute('font-size', Math.max(14, iw*0.018));
+        txt.setAttribute('font-family','monospace');
+        txt.textContent = 'REF '+(1/mmPerPx).toFixed(2)+'px/mm';
+        overlay.appendChild(txt);
+      }
+
+      // --- Box detection: largest solid, non-reference shape ---
+      const refLong  = refShape ? Math.max(refShape.rotW, refShape.rotH) : 0;
+      const refShort = refShape ? Math.min(refShape.rotW, refShape.rotH) : 0;
+      // Score each candidate and pick the best box shape.
+      // Best = most rectangular (4 corners, high solidity, AR ≤ 10, plausible real-world size).
+      let boxShape = null;
+      let bestBoxScore = Infinity;
+      for (const r of shapes) {
+        if (r.area > imgArea * 0.90) continue;                          // image border
+        if (r.area < imgArea * 0.005) continue;                         // too small
+        if (refShape && rectsOverlap(r.bRect, refShape.bRect) > 0.25) continue;
+        if (refLong > 0) {
+          const rL = Math.max(r.rotW,r.rotH), rS = Math.min(r.rotW,r.rotH);
+          if (Math.abs(rL/refLong-1) < 0.12 && Math.abs(rS/refShort-1) < 0.12) continue;
+        }
+        if (r.solidity < 0.40) continue;
+        // Reject wildly non-rectangular aspect ratios (AR > 15 = sliver, not a box)
+        const rL = Math.max(r.rotW,r.rotH), rS = Math.min(r.rotW,r.rotH);
+        if (rS === 0 || rL/rS > 15) continue;
+        // If we have calibration, reject implausible physical sizes
+        if (mmPerPx) {
+          const longMm = rL * mmPerPx, shortMm = rS * mmPerPx;
+          if (longMm < 20 || longMm > 900) continue;   // < 2cm or > 90cm — not a box
+          if (shortMm < 10) continue;
+        }
+        // Score: prefer 4 corners, high solidity, moderate size (not gigantic)
+        const cornerPenalty = Math.abs(r.corners - 4) * 0.08;
+        const solidPenalty  = (1 - r.solidity) * 0.5;
+        // Slight penalty for very large shapes (often multi-object clusters)
+        const sizePenalty   = r.area > imgArea * 0.60 ? 0.4 : 0;
+        const score = cornerPenalty + solidPenalty + sizePenalty;
+        if (score < bestBoxScore) { bestBoxScore = score; boxShape = r; }
+      }
+      if (boxShape) {
+        const bEl = svgRect(boxShape.bRect.x, boxShape.bRect.y, boxShape.bRect.width, boxShape.bRect.height, '#ff6b6b', 1);
+        bEl.setAttribute('stroke-width','4');
+        overlay.appendChild(bEl);
+        // Show corner count as a confidence indicator
+        const ctxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+        ctxt.setAttribute('x', boxShape.bRect.x + boxShape.bRect.width - 4);
+        ctxt.setAttribute('y', boxShape.bRect.y + boxShape.bRect.height + Math.max(18, iw*0.018));
+        ctxt.setAttribute('fill','#ff6b6b');
+        ctxt.setAttribute('text-anchor','end');
+        ctxt.setAttribute('font-size', Math.max(12, iw*0.015));
+        ctxt.setAttribute('font-family','monospace');
+        ctxt.textContent = `CAJA (${boxShape.corners} esq, sol:${boxShape.solidity.toFixed(2)})`;
+        overlay.appendChild(ctxt);
+      }
+
+      // --- Dimension extraction ---
+      // Re-run edge detection for W measurement (need the edges Mat)
+      const blurW = new cv.Mat(), edgesW = new cv.Mat();
+      cv.GaussianBlur(gray, blurW, new cv.Size(5,5), 0);
+      const otsuM2 = new cv.Mat();
+      const ot2 = cv.threshold(blurW, otsuM2, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+      otsuM2.delete();
+      cv.Canny(blurW, edgesW, Math.round(ot2*0.5), Math.round(ot2));
+      blurW.delete();
+
+      let detailMsg = '';
+      if (mmPerPx && boxShape) {
+        const longPx  = Math.max(boxShape.rotW, boxShape.rotH);
+        const shortPx = Math.min(boxShape.rotW, boxShape.rotH);
+        const Lmm = Math.round(longPx  * mmPerPx);
+        const Hmm = Math.round(shortPx * mmPerPx);
+        S.L = Lmm; S.H = Hmm;
+
+        let Wmm = S.W || Math.round(Lmm * 0.3);
+        let wSource = 'estimado (medir manualmente)';
+
+        if (S.photoMode === 'flat') {
+          const detectedW = detectWidthFromFlatDieline(edgesW, canvas.width, boxShape.bRect, mmPerPx);
+          // Sanity: W must be ≥ 10mm and ≤ 60% of L (a box can't be wider than it is long)
+          const wPlausible = detectedW && detectedW >= 10 && detectedW <= Lmm * 0.60;
+          if (wPlausible) {
+            Wmm     = detectedW;
+            wSource = 'detectado desde plano (verificar)';
+            S.W     = Wmm;
+          } else {
+            wSource = 'no detectado — ingresa W manualmente';
+          }
+        }
+
+        detailMsg = `<b>Escala:</b> ${(1/mmPerPx).toFixed(2)} px/mm · <b>L:</b> ${Lmm} mm · <b>H:</b> ${Hmm} mm · <b>W:</b> ${Wmm} mm <em>(${wSource})</em>`;
+        if (S.photoMode === 'box') {
+          detailMsg += ` · <span style="color:#f472b6">⚠ W no medible en foto 3D — ingresa manualmente</span>`;
+        }
+        if (refShape) {
+          const rn = {card:'Tarjeta',coin10:'Moneda $10',coin1:'Moneda $1',a4:'Hoja A4'}[S.ref]||S.ref;
+          detailMsg = `<b>Ref (${rn}):</b> ${refShape.bRect.width}×${refShape.bRect.height} px · ` + detailMsg;
+        }
+        showDetectedDims(S.L, Wmm, S.H, true);
+        document.getElementById('cvDetail').innerHTML = detailMsg;
+        document.getElementById('cvDetail').style.display = 'block';
+        setStatus('ready', `✓ OpenCV: ${(1/mmPerPx).toFixed(2)} px/mm — L${Lmm}×W${Wmm}×H${Hmm}mm`);
+      } else if (mmPerPx) {
+        document.getElementById('cvDetail').innerHTML = `Referencia calibrada: ${(1/mmPerPx).toFixed(2)} px/mm. Sin contorno claro — ingresa medidas manualmente.`;
+        document.getElementById('cvDetail').style.display = 'block';
+        setStatus('ready', `✓ OpenCV listo — ${(1/mmPerPx).toFixed(2)} px/mm`);
+      } else {
+        const hint = refSpec ? '⚠ Referencia no detectada — más luz, fondo contrastante, referencia plana sin sobreposición' : '✓ OpenCV activo · Sin referencia — precisión basada en IA';
+        setStatus('ready', hint);
+        if (refSpec) {
+          document.getElementById('cvDetail').innerHTML = `<span style="color:#f472b6">Referencia (${S.ref}) no encontrada. Intenta: fondo oscuro, referencia plana y sin sombras.</span>`;
+          document.getElementById('cvDetail').style.display = 'block';
+        }
+      }
+      edgesW.delete(); src.delete(); gray.delete();
+    } catch(err) {
+      console.error('OpenCV error:', err);
+      setStatus('error','⚠ OpenCV error: '+err.message);
+    }
+  };
+  img.src = S.photoDataURL;
+}
+
 function svgRect(x,y,w,h,color,opacity){const el=document.createElementNS('http://www.w3.org/2000/svg','rect');el.setAttribute('x',x);el.setAttribute('y',y);el.setAttribute('width',w);el.setAttribute('height',h);el.setAttribute('fill','none');el.setAttribute('stroke',color);el.setAttribute('stroke-width','2');el.setAttribute('stroke-opacity',opacity);return el;}
 function rectsOverlap(a,b){const ix=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x));const iy=Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));const inter=ix*iy;return inter/(a.width*a.height+b.width*b.height-inter);}
-async function detectFromPhoto(){
-  if(!S.photoDataURL)return showError('Primero sube una foto');
-  if(!S.key)return showError('Ingresa tu API key de OpenRouter');
-  showLoading('Analizando foto con IA (Gemini Flash)…');hideError();
-  try{
-    const refLabel={none:'no reference object visible',card:'a standard credit/debit card (85.6×54mm) is visible as reference',coin10:'a Mexican $10 coin (28mm diameter) is visible as reference',coin1:'a Mexican $1 coin (21mm diameter) is visible as reference',ruler:'a ruler is visible for scale reference',a4:'an A4 sheet (210×297mm) is visible as reference'}[S.ref];
-    const scaleNote=S.mmPerPx?`OpenCV has already calibrated the scale at ${(1/S.mmPerPx).toFixed(2)} px/mm. Use this to improve your measurement.`:'No pixel calibration available.';
-    const prompt=`You are a precision packaging engineer. Analyze this image of a cardboard box.\nContext: ${S.photoMode==='flat'?'The box is FLAT/UNFOLDED (a dieline layout).':'The box is ASSEMBLED (3D view).'}\nReference: ${refLabel}.\n${scaleNote}\n\nMEASUREMENT PROTOCOL:\n1. Locate the reference object\n2. Count exactly how many pixels wide it is\n3. Calculate mm_per_pixel = known_mm / pixel_count\n4. Measure each box dimension using that same scale\n5. Report pixel counts and calculations\n\nRespond ONLY with valid JSON:\n{\n  "L": <number, length in mm>,\n  "W": <number, width in mm>,\n  "H": <number, height in mm>,\n  "boxType": <"tuckS"|"tuckR"|"auto"|"glue"|"snap"|"tray">,\n  "notes": "<measurement details>",\n  "confidence": <0-1>\n}`;
-    const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+S.key,'Content-Type':'application/json'},
-      body:JSON.stringify({model:'gemini-2.0-flash',messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:S.photoDataURL}}]}],max_tokens:400,response_format:{type:'json_object'}})
-    });
-    if(!resp.ok){const t=await resp.text();throw new Error(resp.status+': '+t);}
-    const data=await resp.json();const json=JSON.parse(data.choices[0].message.content);
-    hideLoading();S.L=json.L||S.L;S.W=json.W||S.W;S.H=json.H||S.H;
-    if(json.boxType)setType(json.boxType);
-    showDetectedDims(S.L,S.W,S.H,false);
-    if(json.notes){const detail=document.getElementById('cvDetail');detail.innerHTML=(detail.innerHTML?detail.innerHTML+' · ':'')+' <b>IA:</b> '+json.notes;detail.style.display='block';}
-  }catch(e){hideLoading();showError('Error IA: '+e.message);}
+function detectFromPhoto(){
+  if(!S.photoDataURL||!cvReady)return;
+  const btn=document.getElementById('btnDetect');
+  btn.disabled=true;
+  // runOpenCV fills manL/W/H via showDetectedDims; show confirm banner on completion
+  const origShowDetected=window._origShowDetected||showDetectedDims;
+  runOpenCV();
+  // Banner shown inside showDetectedDims after fields are filled
+  btn.disabled=false;
 }
-function analyze(){const L=parseFloat(document.getElementById('adjL').value||document.getElementById('manL').value||S.L)||0;const W=parseFloat(document.getElementById('adjW').value||document.getElementById('manW').value||S.W)||0;const H=parseFloat(document.getElementById('adjH').value||document.getElementById('manH').value||S.H)||0;if(!L||!W||!H)return showError('Ingresa o detecta las tres dimensiones (L, W, H)');S.L=L;S.W=W;S.H=H;hideError();renderDieline();}
-function onDimChange(){S.L=parseFloat(document.getElementById('manL').value)||S.L;S.W=parseFloat(document.getElementById('manW').value)||S.W;S.H=parseFloat(document.getElementById('manH').value)||S.H;}
+function generateLayout(){
+  hideError();
+  const btn=document.getElementById('btnAnalyze');
+  btn.disabled=true;
+  const L=parseFloat(document.getElementById('manL').value)||0;
+  const W=parseFloat(document.getElementById('manW').value)||0;
+  const H=parseFloat(document.getElementById('manH').value)||0;
+  btn.disabled=false;
+  if(!L||!W||!H)return showError('Ingresa las tres dimensiones L, W y H para generar el layout');
+  S.L=L;S.W=W;S.H=H;
+  showDetectedDims(L,W,H,false);
+  renderDieline();
+}
+// keep backward compat if anything still calls generateAll
+function generateAll(){ generateLayout(); }
+function runOpenCVThen(callback){
+  if(!S.photoDataURL||!cvReady){callback();return;}
+  setStatus('loading','🔍 Analizando imagen…');
+  const img=new Image();
+  img.onload=()=>{
+    try{
+      const canvas=document.getElementById('cvCanvas');
+      canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+      const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);canvas.style.display='none';
+      const src=cv.imread(canvas);const gray=new cv.Mat();const blur=new cv.Mat();const edges=new cv.Mat();const contours=new cv.MatVector();const hierarchy=new cv.Mat();
+      cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+      const mean=cv.mean(gray);const sigma=0.33;
+      const lo=Math.max(0,Math.round((1-sigma)*mean[0]));const hi=Math.min(255,Math.round((1+sigma)*mean[0]));
+      cv.Canny(blur,edges,lo,hi);
+      const kernel=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3));const dilated=new cv.Mat();
+      cv.dilate(edges,dilated,kernel);
+      cv.findContours(dilated,contours,hierarchy,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+      const rects=[];
+      for(let i=0;i<contours.size();i++){
+        const cnt=contours.get(i);const rect=cv.boundingRect(cnt);const rotRect=cv.minAreaRect(cnt);
+        const area=rect.width*rect.height;const imgArea=canvas.width*canvas.height;
+        if(area>imgArea*0.005&&area<imgArea*0.98){const peri=cv.arcLength(cnt,true);const approx=new cv.Mat();cv.approxPolyDP(cnt,approx,0.02*peri,true);rects.push({rect,rotW:rotRect.size.width,rotH:rotRect.size.height,area,corners:approx.rows});approx.delete();}
+        cnt.delete();
+      }
+      rects.sort((a,b)=>b.area-a.area);
+      let refRect=null,mmPerPx=null,refL2=0,refS2=0;const refSpec=REF[S.ref];
+      if(refSpec&&refSpec.shape==='rect'){const targetAR=Math.max(refSpec.w,refSpec.h)/Math.min(refSpec.w,refSpec.h);for(const r of rects){const rL=Math.max(r.rotW,r.rotH),rS=Math.min(r.rotW,r.rotH);if(Math.abs(rL/rS-targetAR)/targetAR<0.15){refRect=r.rect;refL2=rL;refS2=rS;mmPerPx=Math.max(refSpec.w,refSpec.h)/rL;break;}}}
+      else if(refSpec&&refSpec.shape==='circle'){for(const r of rects){if(Math.abs(r.rotW/r.rotH-1)<0.2){refRect=r.rect;refL2=Math.max(r.rotW,r.rotH);refS2=Math.min(r.rotW,r.rotH);mmPerPx=refSpec.w/refL2;break;}}}
+      S.mmPerPx=mmPerPx;S.cvSource=mmPerPx!==null;
+      const overlay=document.getElementById('cvOverlay');const iw=canvas.width,ih=canvas.height;
+      overlay.setAttribute('viewBox',`0 0 ${iw} ${ih}`);overlay.setAttribute('preserveAspectRatio','xMidYMid meet');overlay.style.display='block';overlay.innerHTML='';
+      rects.slice(0,5).forEach((r,idx)=>{overlay.appendChild(svgRect(r.rect.x,r.rect.y,r.rect.width,r.rect.height,idx===0?'#6c63ff':'#4a4a7a',idx===0?0.5:0.2));});
+      if(refRect){const rEl=svgRect(refRect.x,refRect.y,refRect.width,refRect.height,'#43e97b',1);rEl.setAttribute('stroke-width','3');overlay.appendChild(rEl);const txt=document.createElementNS('http://www.w3.org/2000/svg','text');txt.setAttribute('x',refRect.x+4);txt.setAttribute('y',refRect.y-4);txt.setAttribute('fill','#43e97b');txt.setAttribute('font-size',Math.max(14,iw*0.02));txt.setAttribute('font-family','monospace');txt.textContent='REF '+(1/mmPerPx).toFixed(2)+'px/mm';overlay.appendChild(txt);}
+      let boxRect=null,boxRotW=0,boxRotH=0;
+      for(const r of rects){
+        if(refRect&&rectsOverlap(r.rect,refRect)>0.3)continue;
+        if(refL2>0){const rL=Math.max(r.rotW,r.rotH),rS=Math.min(r.rotW,r.rotH);if(Math.abs(rL/refL2-1)<0.15&&Math.abs(rS/refS2-1)<0.15)continue;}
+        if(r.area>canvas.width*canvas.height*0.01){boxRect=r.rect;boxRotW=r.rotW;boxRotH=r.rotH;break;}
+      }
+      if(boxRect){const bEl=svgRect(boxRect.x,boxRect.y,boxRect.width,boxRect.height,'#ff6b6b',1);bEl.setAttribute('stroke-width','3');overlay.appendChild(bEl);}
+      if(mmPerPx&&boxRect){
+        const longPx=Math.max(boxRotW,boxRotH),shortPx=Math.min(boxRotW,boxRotH);
+        S.L=Math.round(longPx*mmPerPx);S.H=Math.round(shortPx*mmPerPx);
+        let Wmm=S.W||Math.round(S.L*0.3);let wSource='estimado';
+        if(S.photoMode==='flat'){const dw=detectWidthFromFlatDieline(edges,canvas.width,boxRect,mmPerPx);if(dw){Wmm=dw;wSource='detectado desde plano';S.W=Wmm;}}
+        let detailMsg=`<b>Escala:</b> ${(1/mmPerPx).toFixed(2)} px/mm · <b>L:</b> ${S.L}mm · <b>H:</b> ${S.H}mm · <b>W:</b> ${Wmm}mm <em>(${wSource})</em>`;
+        if(S.photoMode==='box')detailMsg+=` · <span style="color:#f472b6">⚠ W no medible en foto 3D — ajusta manualmente</span>`;
+        document.getElementById('cvDetail').innerHTML=detailMsg;document.getElementById('cvDetail').style.display='block';
+        document.getElementById('manL').value=S.L;document.getElementById('manW').value=Wmm;document.getElementById('manH').value=S.H;
+        S.W=Wmm;
+        setStatus('ready',`✓ ${(1/mmPerPx).toFixed(2)} px/mm — L${S.L}×W${Wmm}×H${S.H}mm`);
+      } else if(mmPerPx){
+        setStatus('ready',`✓ Referencia calibrada: ${(1/mmPerPx).toFixed(2)} px/mm — ingresa medidas manualmente`);
+      } else {
+        setStatus('ready','✓ OpenCV activo — sin referencia reconocida');
+      }
+      src.delete();gray.delete();blur.delete();edges.delete();dilated.delete();kernel.delete();contours.delete();hierarchy.delete();
+    }catch(err){console.error(err);setStatus('error','⚠ OpenCV error: '+err.message);}
+    callback();
+  };
+  img.src=S.photoDataURL;
+}
+function analyze(){generateAll();}
+function onDimChange(){
+  const L=parseFloat(document.getElementById('manL').value)||0;
+  const W=parseFloat(document.getElementById('manW').value)||0;
+  const H=parseFloat(document.getElementById('manH').value)||0;
+  S.L=L||S.L;S.W=W||S.W;S.H=H||S.H;
+  // Live-update total sheet length as user types
+  if(L&&W&&H){
+    const adv=getAdvancedSpec();
+    const spec=calcSheet(L,W,H,S.boxType,adv);
+    if(spec){
+      document.getElementById('resTotalW').textContent=Math.round(spec.sw);
+      document.getElementById('resTotalH').textContent=Math.round(spec.sh);
+      const formula=S.boxType==='tray'
+        ?`L(${L}) + 2×H(${H}) + 2×pestaña(${spec.glueW}) = ${Math.round(spec.sw)} mm`
+        :`2×L(${L}) + 2×W(${W}) + pestaña(${spec.glueW}) = ${Math.round(spec.sw)} mm`;
+      const formulaH=S.boxType==='tray'
+        ?`W(${W}) + 2×H(${H}) = ${Math.round(spec.sh)} mm`
+        :`solapa sup(${spec.topH}) + H(${H}) + solapa inf(${spec.botH}) = ${Math.round(spec.sh)} mm`;
+      document.getElementById('resFormula').innerHTML=formula+'<br>'+formulaH;
+      document.getElementById('resL').textContent=L;
+      document.getElementById('resW').textContent=W;
+      document.getElementById('resH').textContent=H;
+      document.getElementById('resultsSection').style.display='block';
+    }
+  }
+}
 function onAdjust(){S.L=parseFloat(document.getElementById('adjL').value)||S.L;S.W=parseFloat(document.getElementById('adjW').value)||S.W;S.H=parseFloat(document.getElementById('adjH').value)||S.H;if(S.L&&S.W&&S.H)renderDieline();}
 function onAdvChange(){if(S.L&&S.W&&S.H)renderDieline();}
 const TYPES=['tuckS','tuckR','auto','glue','snap','tray'];
@@ -271,56 +805,274 @@ const TYPE_IDS={tuckS:'TuckS',tuckR:'TuckR',auto:'Auto',glue:'Glue',snap:'Snap',
 function setType(t){S.boxType=t;TYPES.forEach(x=>document.getElementById('type'+TYPE_IDS[x]).classList.remove('active'));document.getElementById('type'+TYPE_IDS[t]).classList.add('active');if(S.L&&S.W&&S.H)renderDieline();}
 function toggleAdvanced(){S.advOpen=!S.advOpen;document.getElementById('advancedSection').classList.toggle('open',S.advOpen);}
 function getAdvancedSpec(){return{topStyle:document.getElementById('advTopStyle').value,topH:parseFloat(document.getElementById('advTopH').value)||null,topBevel:parseFloat(document.getElementById('advTopBevel').value)||null,botStyle:document.getElementById('advBotStyle').value,botH:parseFloat(document.getElementById('advBotH').value)||null,botBevel:parseFloat(document.getElementById('advBotBevel').value)||null,earH:parseFloat(document.getElementById('advEarH').value)||null,earInset:parseFloat(document.getElementById('advEarInset').value)||null,glueW:parseFloat(document.getElementById('advGlueW').value)||null,glueBevel:parseFloat(document.getElementById('advGlueBevel').value)||null};}
-function showDetectedDims(L,W,H,fromCV){S.detected=true;S.L=L;S.W=W;S.H=H;document.getElementById('resL').textContent=L||'—';document.getElementById('resW').textContent=W||'—';document.getElementById('resH').textContent=H||'—';['resLBox','resWBox','resHBox'].forEach(id=>document.getElementById(id).classList.toggle('cv-source',fromCV));const adv=getAdvancedSpec();const spec=calcSheet(L,W,H,S.boxType,adv);document.getElementById('resSheet').textContent=spec?`${Math.round(spec.sw)}×${Math.round(spec.sh)}`:'—';document.getElementById('resultsSection').style.display='block';document.getElementById('adjL').value=L||'';document.getElementById('adjW').value=W||'';document.getElementById('adjH').value=H||'';document.getElementById('adjustCard').style.display='block';renderDieline();}
+function showDetectedDims(L,W,H,fromCV){
+  S.detected=true;S.L=L;S.W=W;S.H=H;
+  document.getElementById('resL').textContent=L||'—';
+  document.getElementById('resW').textContent=W||'—';
+  document.getElementById('resH').textContent=H||'—';
+  ['resLBox','resWBox','resHBox'].forEach(id=>document.getElementById(id).classList.toggle('cv-source',fromCV));
+  const adv=getAdvancedSpec();
+  const spec=calcSheet(L,W,H,S.boxType,adv);
+  // Total sheet length display with formula
+  if(spec){
+    document.getElementById('resTotalW').textContent=Math.round(spec.sw);
+    document.getElementById('resTotalH').textContent=Math.round(spec.sh);
+    const glueW=spec.glueW;
+    const topH=spec.topH, botH=spec.botH;
+    const formula = S.boxType==='tray'
+      ? `L(${L}) + 2×H(${H}) + 2×pestaña(${glueW}) = ${Math.round(spec.sw)} mm`
+      : `2×L(${L}) + 2×W(${W}) + pestaña(${glueW}) = ${Math.round(spec.sw)} mm`;
+    const formulaH = S.boxType==='tray'
+      ? `W(${W}) + 2×H(${H}) = ${Math.round(spec.sh)} mm`
+      : `solapa sup(${topH}) + H(${H}) + solapa inf(${botH}) = ${Math.round(spec.sh)} mm`;
+    document.getElementById('resFormula').innerHTML=formula+'<br>'+formulaH;
+  }
+  document.getElementById('resultsSection').style.display='block';
+  // Fill manual input fields if from CV
+  if(fromCV){
+    document.getElementById('manL').value=L||'';
+    document.getElementById('manW').value=W||'';
+    document.getElementById('manH').value=H||'';
+    document.getElementById('cvConfirmBanner').style.display='block';
+  }
+  // Keep adjust card in sync
+  document.getElementById('adjL').value=L||'';
+  document.getElementById('adjW').value=W||'';
+  document.getElementById('adjH').value=H||'';
+  document.getElementById('adjustCard').style.display='block';
+}
 function calcSheet(L,W,H,type,adv){if(!L||!W||!H)return null;const topH=adv.topH||Math.round(W*0.9);const botH=adv.botH||(type==='auto'||type==='glue'||type==='snap'?Math.round(W*0.5):Math.round(W*0.9));const earH=adv.earH||Math.round(Math.min(topH,botH)*0.9);const glueW=adv.glueW||Math.max(8,Math.round(W*0.15));let sw,sh;if(type==='tray'){sw=L+2*H+2*glueW;sh=W+2*H;}else{sw=2*L+2*W+glueW;sh=topH+H+botH;}return{sw,sh,topH,botH,earH,glueW,L,W,H};}
 const NS='http://www.w3.org/2000/svg';
-const CUT='#1a1a1a';const FOLD='#6c63ff';const GLUE='#ff6b6b';const PAD=40;
+const CUT='#1a1a1a';const FOLD='#6c63ff';const GLUE='#ff6b6b';const PAD=50;
 function svgEl(tag,attrs){const el=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;}
 function svgLine(x1,y1,x2,y2,stroke,dash){const attrs={x1,y1,x2,y2,stroke,'stroke-width':stroke===CUT?1.5:1,fill:'none'};if(dash)attrs['stroke-dasharray']=dash;return svgEl('line',attrs);}
 function svgPoly(pts,stroke,fill,dash){const points=pts.map(p=>p.join(',')).join(' ');const attrs={points,stroke,fill:fill||'none','stroke-width':stroke===CUT?1.5:1};if(dash)attrs['stroke-dasharray']=dash;return svgEl('polygon',attrs);}
 function svgText(x,y,text,size,color,anchor){const el=svgEl('text',{x,y,'font-size':size||9,fill:color||'#555','text-anchor':anchor||'middle','font-family':'monospace'});el.textContent=text;return el;}
 function svgDimH(svg,x1,x2,y,label){const g=svgEl('g',{});g.appendChild(svgLine(x1,y,x2,y,'#aaa'));g.appendChild(svgLine(x1,y-3,x1,y+3,'#aaa'));g.appendChild(svgLine(x2,y-3,x2,y+3,'#aaa'));g.appendChild(svgText((x1+x2)/2,y-4,label,8,'#777'));svg.appendChild(g);}
 function svgDimV(svg,x,y1,y2,label){const g=svgEl('g',{});g.appendChild(svgLine(x,y1,x,y2,'#aaa'));g.appendChild(svgLine(x-3,y1,x+3,y1,'#aaa'));g.appendChild(svgLine(x-3,y2,x+3,y2,'#aaa'));const t=svgText(x-6,(y1+y2)/2,label,8,'#777','end');t.setAttribute('dominant-baseline','middle');svg.appendChild(g);}
-function renderDieline(){const L=S.L,W=S.W,H=S.H;if(!L||!W||!H)return;const adv=getAdvancedSpec();const spec=calcSheet(L,W,H,S.boxType,adv);if(!spec)return;const{sw,sh,topH,botH,earH,glueW}=spec;const bevel=adv.topBevel||Math.min(4,W*0.05);const botBevel=adv.botBevel||Math.min(4,W*0.05);const glueBevel=adv.glueBevel||Math.min(4,W*0.08);const earInset=adv.earInset||Math.min(3,H*0.05);const scale=Math.min(1,(820-PAD*2)/sw);const vw=sw*scale+PAD*2,vh=sh*scale+PAD*2+30;const svg=document.getElementById('dieline');svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${vw} ${vh}`);svg.setAttribute('width',vw);svg.setAttribute('height',vh);svg.style.background='#fff';const s=n=>n*scale;const ox=PAD,oy=PAD+15;const g=svgEl('g',{});svg.appendChild(g);if(S.boxType==='tray'){renderTray(g,ox,oy,s,L,W,H,glueW,bevel);}else{renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv);}svgDimH(svg,ox,ox+s(sw),oy-10,`${Math.round(sw)} mm`);svgDimV(svg,ox-10,oy,oy+s(sh),`${Math.round(sh)} mm`);const legY=oy+s(sh)+20;[['Corte',CUT,''],['Doblez',FOLD,'4,2'],['Pegado',GLUE,'']].forEach(([lbl,clr,dash],i)=>{const lx=ox+i*120;g.appendChild(svgLine(lx,legY,lx+30,legY,clr,dash||null));g.appendChild(svgText(lx+34,legY+3,lbl,8,'#555','start'));});document.getElementById('dielineCard').style.display='block';document.getElementById('resSheet').textContent=`${Math.round(sw)}×${Math.round(sh)}`;}
+function addRegMark(svg, cx, cy) {
+  // Small crosshair registration mark at each dieline corner
+  const m = 7, gap = 3;
+  const color = '#999';
+  svg.appendChild(svgLine(cx-m-gap, cy, cx-gap, cy, color));
+  svg.appendChild(svgLine(cx+gap,   cy, cx+m+gap, cy, color));
+  svg.appendChild(svgLine(cx, cy-m-gap, cx, cy-gap, color));
+  svg.appendChild(svgLine(cx, cy+gap,   cx, cy+m+gap, color));
+  const c = svgEl('circle',{cx,cy,r:3,fill:'none',stroke:color,'stroke-width':'0.7'});
+  svg.appendChild(c);
+}
+
+function renderDieline(){
+  const L=S.L,W=S.W,H=S.H;
+  if(!L||!W||!H)return;
+  const adv=getAdvancedSpec();
+  const spec=calcSheet(L,W,H,S.boxType,adv);
+  if(!spec)return;
+  const{sw,sh,topH,botH,earH,glueW}=spec;
+  // Clamp bevels to 40% of L to prevent polygon inversion
+  const rawBev    = adv.topBevel  || Math.min(6, L*0.08);
+  const rawBotBev = adv.botBevel  || Math.min(6, L*0.08);
+  const rawGluBev = adv.glueBevel || Math.min(4, W*0.08);
+  const bevel     = Math.min(rawBev,    L*0.4);
+  const botBevel  = Math.min(rawBotBev, L*0.4);
+  const glueBevel = Math.min(rawGluBev, H*0.4);
+  const earInset  = Math.min(adv.earInset || Math.min(3, H*0.05), earH*0.45);
+  const maxScale  = (820-PAD*2)/sw;
+  const scale     = Math.min(maxScale, (600-PAD*2)/sh, 1.5); // allow small boxes to scale up
+  const vw=sw*scale+PAD*2, vh=sh*scale+PAD*2+40;
+  const svg=document.getElementById('dieline');
+  svg.innerHTML='';
+  svg.setAttribute('viewBox',`0 0 ${vw} ${vh}`);
+  svg.setAttribute('width',vw);
+  svg.setAttribute('height',vh);
+  svg.style.background='#fff';
+  const s=n=>n*scale;
+  const ox=PAD, oy=PAD+18;
+  const g=svgEl('g',{});
+  svg.appendChild(g);
+  if(S.boxType==='tray'){
+    renderTray(g,ox,oy,s,L,W,H,glueW,bevel);
+  } else {
+    renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv);
+  }
+  // Dimension annotations
+  svgDimH(svg, ox, ox+s(sw), oy-12, `${Math.round(sw)} mm`);
+  svgDimV(svg, ox-14, oy, oy+s(sh), `${Math.round(sh)} mm`);
+  // Legend
+  const legY=oy+s(sh)+22;
+  [['Corte',CUT,''],['Doblez',FOLD,'4,2'],['Pegado',GLUE,'']].forEach(([lbl,clr,dash],i)=>{
+    const lx=ox+i*120;
+    g.appendChild(svgLine(lx,legY,lx+30,legY,clr,dash||null));
+    g.appendChild(svgText(lx+34,legY+3,lbl,8,'#555','start'));
+  });
+  // Registration marks at dieline corners
+  [[ox,oy],[ox+s(sw),oy],[ox,oy+s(sh)],[ox+s(sw),oy+s(sh)]].forEach(([rx,ry])=>addRegMark(svg,rx,ry));
+  document.getElementById('dielineCard').style.display='block';
+  document.getElementById('resSheet').textContent=`${Math.round(sw)}×${Math.round(sh)}`;
+}
+
 function renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv){
-  const x0=ox,x1=x0+s(glueW),x2=x1+s(W),x3=x2+s(L),x4=x3+s(W),x5=x4+s(L);
-  const y0=oy,y1=y0+s(topH),y2=y1+s(H),y3=y2+s(botH);
+  const x0=ox, x1=x0+s(glueW), x2=x1+s(W), x3=x2+s(L), x4=x3+s(W), x5=x4+s(L);
+  const y0=oy, y1=y0+s(topH), y2=y1+s(H), y3=y2+s(botH);
   const inv=S.boxType==='tuckR';
-  // Tuck flaps on L panels (FRENTE x2-x3 and DORSO x4-x5)
-  // tuckR: top tuck on FRENTE, bottom tuck on DORSO
-  // tuckS: top tuck on DORSO, bottom tuck on FRENTE
   const topTL=inv?x2:x4, topTR=inv?x3:x5;
   const botTL=inv?x4:x2, botTR=inv?x5:x3;
-  // TOP TUCK FLAP
-  g.appendChild(svgPoly([[topTL,y1],[topTL+s(bevel),y0],[topTR-s(bevel),y0],[topTR,y1]],CUT,'none'));
-  // BOTTOM TUCK FLAP
-  g.appendChild(svgPoly([[botTL,y2],[botTL+s(botBevel),y3],[botTR-s(botBevel),y3],[botTR,y2]],CUT,'none'));
-  // BODY EDGES (cut lines — only body height, not full sheet)
+
+  // TOP TUCK FLAP (beveled) — clamped so bevel never exceeds half the flap span
+  const maxBevPx = (topTR-topTL)*0.4;
+  const safeBev  = Math.min(s(bevel), maxBevPx);
+  g.appendChild(svgPoly([[topTL,y1],[topTL+safeBev,y0],[topTR-safeBev,y0],[topTR,y1]],CUT,'none'));
+
+  // BOTTOM FLAP — shape depends on box type
+  const type = S.boxType;
+  if (type==='glue') {
+    // Flat rectangular glue base — no bevel
+    g.appendChild(svgLine(botTL,y2,botTL,y3,CUT));
+    g.appendChild(svgLine(botTR,y2,botTR,y3,CUT));
+    g.appendChild(svgLine(botTL,y3,botTR,y3,CUT));
+    // Score line across middle of glue flap
+    g.appendChild(svgLine(botTL,y2+s(botH)*0.5,botTR,y2+s(botH)*0.5,FOLD,'2,2'));
+  } else if (type==='auto') {
+    // Auto-bottom: two interlocking panels — simplified as 4-part base
+    const ymid = y2+s(botH)*0.5;
+    const xmid = (botTL+botTR)/2;
+    g.appendChild(svgLine(botTL,y2,botTL,y3,CUT));
+    g.appendChild(svgLine(botTR,y2,botTR,y3,CUT));
+    g.appendChild(svgLine(botTL,y3,botTR,y3,CUT));
+    g.appendChild(svgLine(xmid,y2,xmid,y3,FOLD,'4,2'));
+    g.appendChild(svgLine(botTL,ymid,botTR,ymid,FOLD,'4,2'));
+    // Locking notch
+    const nw=s(L)*0.12, nh=s(botH)*0.22;
+    g.appendChild(svgPoly([[xmid-nw,ymid],[xmid-nw,ymid+nh],[xmid+nw,ymid+nh],[xmid+nw,ymid]],FOLD,'rgba(108,99,255,0.07)','2,2'));
+  } else if (type==='snap') {
+    // Snap lock: flat base with central tab
+    g.appendChild(svgLine(botTL,y2,botTL,y3,CUT));
+    g.appendChild(svgLine(botTR,y2,botTR,y3,CUT));
+    g.appendChild(svgLine(botTL,y3,botTR,y3,CUT));
+    const tw=(botTR-botTL)*0.2, th=s(botH)*0.3;
+    const mx=(botTL+botTR)/2;
+    g.appendChild(svgPoly([[mx-tw,y3],[mx-tw,y3+th],[mx+tw,y3+th],[mx+tw,y3]],CUT,'rgba(108,99,255,0.08)'));
+  } else {
+    // Tuck flap (tuckS / tuckR) — beveled
+    const maxBotBevPx = (botTR-botTL)*0.4;
+    const safeBotBev  = Math.min(s(botBevel), maxBotBevPx);
+    g.appendChild(svgPoly([[botTL,y2],[botTL+safeBotBev,y3],[botTR-safeBotBev,y3],[botTR,y2]],CUT,'none'));
+  }
+
+  // BODY SIDE EDGES (cut lines, body height only)
   g.appendChild(svgLine(x1,y1,x1,y2,CUT));
   g.appendChild(svgLine(x5,y1,x5,y2,CUT));
+
   // GLUE TAB
-  g.appendChild(svgPoly([[x0,y1+s(glueBevel)],[x1,y1],[x1,y2],[x0,y2-s(glueBevel)]],GLUE,'rgba(255,107,107,0.08)'));
-  // DUST FLAPS on LADO panels (x1-x2 and x3-x4) — top and bottom
+  const safeGlueBev = Math.min(s(glueBevel), s(H)*0.4);
+  g.appendChild(svgPoly([[x0,y1+safeGlueBev],[x1,y1],[x1,y2],[x0,y2-safeGlueBev]],GLUE,'rgba(255,107,107,0.08)'));
+
+  // DUST FLAPS on LADO panels (x1‑x2 and x3‑x4)
   [[x1,x2],[x3,x4]].forEach(([xa,xb])=>{
-    const mid=(xa+xb)/2; const eW=s(W)*0.45;
-    g.appendChild(svgPoly([[mid-eW,y1],[mid-eW+s(earInset),y0+s(earH-earInset)],[mid+eW-s(earInset),y0+s(earH-earInset)],[mid+eW,y1]],CUT,'none'));
-    g.appendChild(svgPoly([[mid-eW,y2],[mid-eW+s(earInset),y3-s(earH-earInset)],[mid+eW-s(earInset),y3-s(earH-earInset)],[mid+eW,y2]],CUT,'none'));
+    const mid    = (xa+xb)/2;
+    const panelW = xb-xa;           // = s(W)
+    const eW     = panelW*0.45;     // half-width of dust flap
+    const safeEarH    = Math.min(s(earH),   s(topH)*0.9, s(botH)*0.9);
+    const safeEarInset= Math.min(s(earInset), eW*0.5);
+    g.appendChild(svgPoly([
+      [mid-eW, y1],
+      [mid-eW+safeEarInset, y0+safeEarH-safeEarInset],
+      [mid+eW-safeEarInset, y0+safeEarH-safeEarInset],
+      [mid+eW, y1]
+    ], CUT, 'none'));
+    g.appendChild(svgPoly([
+      [mid-eW, y2],
+      [mid-eW+safeEarInset, y3-safeEarH+safeEarInset],
+      [mid+eW-safeEarInset, y3-safeEarH+safeEarInset],
+      [mid+eW, y2]
+    ], CUT, 'none'));
   });
-  // FOLD LINES — vertical (body only, panels x1..x5)
+
+  // FOLD LINES — vertical between panels
   [x1,x2,x3,x4,x5].forEach(x=>g.appendChild(svgLine(x,y1,x,y2,FOLD,'4,2')));
-  // Extend fold lines through tuck flap area for tuck panels
   [topTL,topTR].forEach(x=>g.appendChild(svgLine(x,y0,x,y1,FOLD,'4,2')));
   [botTL,botTR].forEach(x=>g.appendChild(svgLine(x,y2,x,y3,FOLD,'4,2')));
-  // FOLD LINES — horizontal at y1 and y2
+
+  // FOLD LINES — horizontal at body‑flap boundary
   g.appendChild(svgLine(x1,y1,x5,y1,FOLD,'4,2'));
   g.appendChild(svgLine(x1,y2,x5,y2,FOLD,'4,2'));
+
   // PANEL LABELS
   const panels=[[x1,x2,'LADO\n'+W+'mm'],[x2,x3,'FRENTE\n'+L+'mm'],[x3,x4,'LADO\n'+W+'mm'],[x4,x5,'DORSO\n'+L+'mm']];
   const midY=(y1+y2)/2;
   panels.forEach(([xa,xb,lbl])=>{lbl.split('\n').forEach((line,i)=>{g.appendChild(svgText((xa+xb)/2,midY-6+i*11,line,9,'#444'));});});
   g.appendChild(svgText((x0+x1)/2,midY,'PEG',8,'#ff6b6b'));
 }
-function renderTray(g,ox,oy,s,L,W,H,glueW,bevel){const x0=ox,x1=x0+s(glueW),x2=x1+s(H),x3=x2+s(L),x4=x3+s(H),x5=x4+s(glueW);const y0=oy,y1=y0+s(H),y2=y1+s(W),y3=y2+s(H);g.appendChild(svgLine(x1,y0,x4,y0,CUT));g.appendChild(svgLine(x1,y3,x4,y3,CUT));g.appendChild(svgLine(x0,y1,x5,y1,CUT));g.appendChild(svgLine(x0,y2,x5,y2,CUT));g.appendChild(svgLine(x1,y0,x1,y3,CUT));g.appendChild(svgLine(x4,y0,x4,y3,CUT));g.appendChild(svgLine(x0,y1,x0,y2,CUT));g.appendChild(svgLine(x5,y1,x5,y2,CUT));g.appendChild(svgLine(x1,y0,x0,y1,CUT));g.appendChild(svgLine(x4,y0,x5,y1,CUT));g.appendChild(svgLine(x1,y3,x0,y2,CUT));g.appendChild(svgLine(x4,y3,x5,y2,CUT));[x1,x2,x3,x4].forEach(x=>g.appendChild(svgLine(x,y0,x,y3,FOLD,'4,2')));[y1,y2].forEach(y=>g.appendChild(svgLine(x0,y,x5,y,FOLD,'4,2')));const cx=(x2+x3)/2,cy=(y1+y2)/2;g.appendChild(svgText(cx,cy-5,'BASE',10,'#444'));g.appendChild(svgText(cx,cy+8,`${L}×${W} mm`,9,'#777'));}
+
+function renderTray(g,ox,oy,s,L,W,H,glueW,bevel){
+  const x0=ox, x1=x0+s(glueW), x2=x1+s(H), x3=x2+s(L), x4=x3+s(H), x5=x4+s(glueW);
+  const y0=oy, y1=y0+s(H), y2=y1+s(W), y3=y2+s(H);
+  // Outer cut perimeter
+  g.appendChild(svgLine(x1,y0,x4,y0,CUT));
+  g.appendChild(svgLine(x1,y3,x4,y3,CUT));
+  g.appendChild(svgLine(x0,y1,x5,y1,CUT));
+  g.appendChild(svgLine(x0,y2,x5,y2,CUT));
+  // Side wall vertical cuts
+  g.appendChild(svgLine(x1,y0,x1,y3,CUT));
+  g.appendChild(svgLine(x4,y0,x4,y3,CUT));
+  // Glue tab cuts
+  g.appendChild(svgLine(x0,y1,x0,y2,CUT));
+  g.appendChild(svgLine(x5,y1,x5,y2,CUT));
+  // Corner diagonal cuts
+  g.appendChild(svgLine(x1,y0,x0,y1,CUT));
+  g.appendChild(svgLine(x4,y0,x5,y1,CUT));
+  g.appendChild(svgLine(x1,y3,x0,y2,CUT));
+  g.appendChild(svgLine(x4,y3,x5,y2,CUT));
+  // Glue tab fill
+  [[x0,x1],[x4,x5]].forEach(([xa,xb])=>{
+    g.appendChild(svgPoly([[xa,y1],[xb,y1],[xb,y2],[xa,y2]],GLUE,'rgba(255,107,107,0.08)'));
+  });
+  // Fold lines
+  [x1,x2,x3,x4].forEach(x=>g.appendChild(svgLine(x,y0,x,y3,FOLD,'4,2')));
+  [y1,y2].forEach(y=>g.appendChild(svgLine(x0,y,x5,y,FOLD,'4,2')));
+  // Labels
+  const cx=(x2+x3)/2, cy=(y1+y2)/2;
+  g.appendChild(svgText(cx,cy-5,'BASE',10,'#444'));
+  g.appendChild(svgText(cx,cy+8,`${L}×${W} mm`,9,'#777'));
+  g.appendChild(svgText((x1+x2)/2,cy,'LADO\n'+H+'mm',9,'#444'));
+  g.appendChild(svgText((x3+x4)/2,cy,'LADO\n'+H+'mm',9,'#444'));
+}
+
+function downloadSVG(){
+  if(!S.L||!S.W||!S.H)return;
+  const adv=getAdvancedSpec();
+  const spec=calcSheet(S.L,S.W,S.H,S.boxType,adv);
+  if(!spec)return;
+  const{sw,sh,topH,botH,earH,glueW}=spec;
+  const bevel    =Math.min(adv.topBevel  ||Math.min(6,S.L*0.08),S.L*0.4);
+  const botBevel =Math.min(adv.botBevel  ||Math.min(6,S.L*0.08),S.L*0.4);
+  const glueBevel=Math.min(adv.glueBevel ||Math.min(4,S.W*0.08),S.H*0.4);
+  const earInset =Math.min(adv.earInset  ||Math.min(3,S.H*0.05),earH*0.45);
+  // 1 px = 1 mm — ideal for plotters and design software
+  const pad=5;
+  const cleanSvg=document.createElementNS(NS,'svg');
+  cleanSvg.setAttribute('xmlns',NS);
+  cleanSvg.setAttribute('viewBox',`0 0 ${sw+pad*2} ${sh+pad*2}`);
+  cleanSvg.setAttribute('width',`${sw+pad*2}mm`);
+  cleanSvg.setAttribute('height',`${sh+pad*2}mm`);
+  cleanSvg.setAttribute('style','background:#fff');
+  const g=svgEl('g',{});
+  cleanSvg.appendChild(g);
+  const s=n=>n; // 1:1 scale
+  if(S.boxType==='tray'){renderTray(g,pad,pad,s,S.L,S.W,S.H,glueW,bevel);}
+  else{renderTuck(g,pad,pad,s,S.L,S.W,S.H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv);}
+  // Strip all text (panel labels) — outline only
+  cleanSvg.querySelectorAll('text').forEach(el=>el.remove());
+  const svgData=new XMLSerializer().serializeToString(cleanSvg);
+  const blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`troquel_${S.boxType}_L${S.L}W${S.W}H${S.H}.svg`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function downloadPDF(){const{jsPDF}=window.jspdf;const adv=getAdvancedSpec();const spec=calcSheet(S.L,S.W,S.H,S.boxType,adv);if(!spec)return;const{sw,sh}=spec;const margin=15;const doc=new jsPDF({unit:'mm',format:[sw+margin*2,sh+margin*2+30],orientation:'landscape'});doc.setFontSize(10);doc.setTextColor(50);doc.text(`ARQUETA FOLDING — ${S.boxType.toUpperCase()} — L${S.L}×W${S.W}×H${S.H} mm`,margin,8);doc.setFontSize(7);doc.text(`Hoja: ${Math.round(sw)}×${Math.round(sh)} mm${S.cvSource?' · Medido con OpenCV':''}`,margin,13);const svgEl2=document.getElementById('dieline');const svgData=new XMLSerializer().serializeToString(svgEl2);const canvas2=document.createElement('canvas');const scaleF=3;canvas2.width=svgEl2.getAttribute('width')*scaleF;canvas2.height=svgEl2.getAttribute('height')*scaleF;const ctx2=canvas2.getContext('2d');ctx2.fillStyle='#fff';ctx2.fillRect(0,0,canvas2.width,canvas2.height);const img2=new Image();const blob=new Blob([svgData],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);img2.onload=()=>{ctx2.drawImage(img2,0,0,canvas2.width,canvas2.height);const imgData=canvas2.toDataURL('image/png');doc.addImage(imgData,'PNG',margin,margin,sw,sh);doc.save(`troquel_${S.boxType}_L${S.L}W${S.W}H${S.H}.pdf`);URL.revokeObjectURL(url);};img2.src=url;}
 function copyDims(){const text=`L=${S.L}mm W=${S.W}mm H=${S.H}mm Tipo=${S.boxType}`;navigator.clipboard.writeText(text).then(()=>alert('Medidas copiadas: '+text));}
 function showLoading(msg){document.getElementById('loadingMsg').textContent=msg||'Procesando…';document.getElementById('loadingBar').classList.add('show');}
