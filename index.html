@@ -275,8 +275,25 @@ input[type=file]{display:none}
       <div class="dieline-wrap" style="background:#fff;border-radius:8px;overflow:hidden">
         <svg id="traceDieline" xmlns="http://www.w3.org/2000/svg" width="100%"></svg>
       </div>
-      <div class="btn-row" style="margin-top:10px">
-        <button class="btn btn-secondary" onclick="traceDownloadSVG()">🖼 Descargar SVG</button>
+      <!-- medidas manuales + descarga -->
+      <div style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;align-items:flex-end;background:var(--surface2);border-radius:10px;padding:10px 14px">
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:4px">LARGO HOJA (mm)</div>
+            <input id="tracePdfW" type="number" min="1" placeholder="—"
+              style="width:80px;font-size:22px;font-weight:800;color:#a78bfa;background:transparent;border:none;border-bottom:2px solid #a78bfa;text-align:center;outline:none;padding:0 0 2px">
+          </div>
+          <div style="font-size:20px;color:var(--muted);padding-bottom:6px">×</div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:4px">ALTO HOJA (mm)</div>
+            <input id="tracePdfH" type="number" min="1" placeholder="—"
+              style="width:80px;font-size:22px;font-weight:800;color:#a78bfa;background:transparent;border:none;border-bottom:2px solid #a78bfa;text-align:center;outline:none;padding:0 0 2px">
+          </div>
+        </div>
+        <div class="btn-row" style="gap:8px">
+          <button class="btn btn-secondary" onclick="traceDownloadSVG()">🖼 Descargar SVG</button>
+          <button class="btn btn-green"     onclick="traceDownloadPDF()">📄 Descargar PDF</button>
+        </div>
       </div>
     </div>
   </div>
@@ -402,18 +419,18 @@ input[type=file]{display:none}
     <div class="card-title">TROQUEL LINEAL</div>
     <div class="dieline-wrap"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
     <div style="margin-top:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-      <!-- medidas de hoja -->
-      <div style="display:flex;gap:12px;align-items:flex-end;background:var(--surface2);border-radius:10px;padding:8px 16px">
+      <!-- medidas de hoja editables -->
+      <div style="display:flex;gap:10px;align-items:flex-end;background:var(--surface2);border-radius:10px;padding:10px 14px">
         <div style="text-align:center">
-          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">LARGO HOJA</div>
-          <div id="dielineSwLabel" style="font-size:26px;font-weight:800;color:#a78bfa;line-height:1">—</div>
-          <div style="font-size:9px;color:var(--muted)">mm</div>
+          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:4px">LARGO HOJA (mm)</div>
+          <input id="dielineSwLabel" type="number" min="1" placeholder="—"
+            style="width:80px;font-size:22px;font-weight:800;color:#a78bfa;background:transparent;border:none;border-bottom:2px solid #a78bfa;text-align:center;outline:none;padding:0 0 2px">
         </div>
         <div style="font-size:20px;color:var(--muted);padding-bottom:6px">×</div>
         <div style="text-align:center">
-          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px">ALTO HOJA</div>
-          <div id="dielineShLabel" style="font-size:26px;font-weight:800;color:#a78bfa;line-height:1">—</div>
-          <div style="font-size:9px;color:var(--muted)">mm</div>
+          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:4px">ALTO HOJA (mm)</div>
+          <input id="dielineShLabel" type="number" min="1" placeholder="—"
+            style="width:80px;font-size:22px;font-weight:800;color:#a78bfa;background:transparent;border:none;border-bottom:2px solid #a78bfa;text-align:center;outline:none;padding:0 0 2px">
         </div>
       </div>
       <!-- botones -->
@@ -1036,6 +1053,72 @@ function traceDownloadSVG() {
   const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'dieline-trazado.svg'});
   a.click();
 }
+function traceDownloadPDF() {
+  const {jsPDF} = window.jspdf;
+  if (!jsPDF) { alert('jsPDF no cargado'); return; }
+  const svgEl = document.getElementById('traceDieline');
+  if (!svgEl) return;
+
+  const pdfW = parseFloat(document.getElementById('tracePdfW').value) || null;
+  const pdfH = parseFloat(document.getElementById('tracePdfH').value) || null;
+
+  // Page size: dieline + right margin for dimension label
+  const svgW = parseFloat(svgEl.getAttribute('width')) || 400;
+  const svgH = parseFloat(svgEl.getAttribute('height')) || 300;
+  const margin = 14;
+  const labelCol = pdfW || pdfH ? 52 : 0; // extra column on the right for dims
+  const pageW = svgW + margin * 2 + labelCol;
+  const pageH = svgH + margin * 2 + 18;
+
+  const doc = new jsPDF({unit:'mm', format:[pageW, pageH], orientation: pageW > pageH ? 'landscape' : 'portrait'});
+
+  // Header
+  doc.setFontSize(8); doc.setTextColor(80);
+  doc.text('ARQUETA — DIELINE DESDE TRAZADO', margin, 7);
+
+  // Render SVG to canvas then into PDF
+  const svgData = new XMLSerializer().serializeToString(svgEl);
+  const canvas = document.createElement('canvas');
+  const scaleF = 3;
+  canvas.width  = svgW * scaleF;
+  canvas.height = svgH * scaleF;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const img = new Image();
+  const blob = new Blob([svgData], {type:'image/svg+xml'});
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const imgData = canvas.toDataURL('image/png');
+    doc.addImage(imgData, 'PNG', margin, margin, svgW, svgH);
+
+    // Dimension label on the right
+    if (pdfW || pdfH) {
+      const lx = margin + svgW + 6;
+      const ly = margin + svgH / 2 - 16;
+      doc.setFillColor(243, 232, 255);
+      doc.roundedRect(lx, ly, labelCol - 8, 32, 3, 3, 'F');
+      doc.setFontSize(7); doc.setTextColor(100, 60, 180);
+      doc.text('MEDIDAS HOJA', lx + (labelCol-8)/2, ly + 6, {align:'center'});
+      if (pdfW) {
+        doc.setFontSize(13); doc.setTextColor(80, 30, 160);
+        doc.text(`${pdfW} mm`, lx + (labelCol-8)/2, ly + 15, {align:'center'});
+        doc.setFontSize(7); doc.setTextColor(120);
+        doc.text('largo', lx + (labelCol-8)/2, ly + 19, {align:'center'});
+      }
+      if (pdfH) {
+        doc.setFontSize(13); doc.setTextColor(80, 30, 160);
+        doc.text(`${pdfH} mm`, lx + (labelCol-8)/2, ly + 26, {align:'center'});
+        doc.setFontSize(7); doc.setTextColor(120);
+        doc.text('alto', lx + (labelCol-8)/2, ly + 30, {align:'center'});
+      }
+    }
+
+    doc.save('dieline-trazado.pdf');
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(blob);
+}
 // ── END DIELINE FROM TRACE ─────────────────────────────────────────
 
 // ── REFERENCIA DE HOJA ─────────────────────────────────────────────
@@ -1136,8 +1219,8 @@ function layoutRefUpdate(sw, sh, L, W, H) {
   // medidas junto al troquel
   const _sw = document.getElementById('dielineSwLabel');
   const _sh = document.getElementById('dielineShLabel');
-  if (_sw) _sw.textContent = Math.round(sw);
-  if (_sh) _sh.textContent = Math.round(sh);
+  if (_sw && !_sw.value) _sw.value = Math.round(sw);
+  if (_sh && !_sh.value) _sh.value = Math.round(sh);
 }
 
 function layoutRefDownloadSVG() {
@@ -1795,8 +1878,6 @@ function renderDieline(){
   document.getElementById('dielineCard').style.display='block';
   const _rsTW=document.getElementById('resTotalW'); if(_rsTW) _rsTW.textContent=Math.round(sw);
   const _rsTH=document.getElementById('resTotalH'); if(_rsTH) _rsTH.textContent=Math.round(sh);
-  const _sw=document.getElementById('dielineSwLabel'); if(_sw) _sw.textContent=Math.round(sw);
-  const _sh=document.getElementById('dielineShLabel'); if(_sh) _sh.textContent=Math.round(sh);
 }
 
 function renderTuck(g,ox,oy,s,L,W,H,topH,botH,earH,glueW,bevel,botBevel,glueBevel,earInset,adv){
