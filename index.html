@@ -736,7 +736,7 @@ function traceClear() {
   document.getElementById('traceBtnAnalyze').disabled = true;
   document.getElementById('traceBtnGenerate').disabled = true;
   ['traceL','traceW','traceH'].forEach(id => document.getElementById(id).value = '');
-  if (TR.hasPhoto) setTraceHint('Dibuja el contorno completo de la caja con el mouse o dedo.', '#fbbf24');
+  setTraceHint(TR.hasPhoto ? 'Dibuja el contorno completo de la caja con el mouse o dedo.' : 'Sube una foto y dibuja el contorno completo de la caja.', '#fbbf24');
 }
 
 function traceCheckReady() {
