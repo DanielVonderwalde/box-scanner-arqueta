@@ -272,28 +272,37 @@ input[type=file]{display:none}
         <span style="background:#f472b6;color:#fff;padding:1px 7px;border-radius:4px">Pestaña pegue</span>
         <span style="background:rgba(251,191,36,0.25);border:1px solid #fbbf24;padding:1px 7px;border-radius:4px">Solapas</span>
       </div>
-      <div class="dieline-wrap" style="background:#fff;border-radius:8px;overflow:hidden">
-        <svg id="traceDieline" xmlns="http://www.w3.org/2000/svg" width="100%"></svg>
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <!-- dieline SVG -->
+        <div style="flex:1;min-width:200px">
+          <div class="dieline-wrap" style="background:#fff;border-radius:8px;overflow:hidden">
+            <svg id="traceDieline" xmlns="http://www.w3.org/2000/svg" width="100%"></svg>
+          </div>
+        </div>
+        <!-- panel de medidas del contorno -->
+        <div style="flex:0 0 auto;background:var(--surface2);border-radius:12px;padding:14px 16px;min-width:160px">
+          <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px">MEDIDAS DEL CONTORNO</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">ANCHO (mm)</div>
+              <input id="tracePdfW" type="number" min="1" placeholder="escribe aquí"
+                style="width:100%;font-size:20px;font-weight:800;color:#60a5fa;background:transparent;border:none;border-bottom:2px solid #60a5fa;outline:none;padding:0 0 2px;text-align:center">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">ALTO (mm)</div>
+              <input id="tracePdfH" type="number" min="1" placeholder="escribe aquí"
+                style="width:100%;font-size:20px;font-weight:800;color:#60a5fa;background:transparent;border:none;border-bottom:2px solid #60a5fa;outline:none;padding:0 0 2px;text-align:center">
+            </div>
+            <div style="font-size:9px;color:var(--muted);line-height:1.4;margin-top:2px">
+              Escribe las medidas reales del contorno. Aparecen en el PDF.
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- medidas manuales + descarga -->
-      <div style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-        <div style="display:flex;gap:10px;align-items:flex-end;background:var(--surface2);border-radius:10px;padding:10px 14px">
-          <div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:4px">LARGO HOJA (mm)</div>
-            <input id="tracePdfW" type="number" min="1" placeholder="—"
-              style="width:80px;font-size:22px;font-weight:800;color:#a78bfa;background:transparent;border:none;border-bottom:2px solid #a78bfa;text-align:center;outline:none;padding:0 0 2px">
-          </div>
-          <div style="font-size:20px;color:var(--muted);padding-bottom:6px">×</div>
-          <div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:4px">ALTO HOJA (mm)</div>
-            <input id="tracePdfH" type="number" min="1" placeholder="—"
-              style="width:80px;font-size:22px;font-weight:800;color:#a78bfa;background:transparent;border:none;border-bottom:2px solid #a78bfa;text-align:center;outline:none;padding:0 0 2px">
-          </div>
-        </div>
-        <div class="btn-row" style="gap:8px">
-          <button class="btn btn-secondary" onclick="traceDownloadSVG()">🖼 Descargar SVG</button>
-          <button class="btn btn-green"     onclick="traceDownloadPDF()">📄 Descargar PDF</button>
-        </div>
+      <!-- botones descarga -->
+      <div class="btn-row" style="margin-top:12px;gap:8px">
+        <button class="btn btn-secondary" onclick="traceDownloadSVG()">🖼 Descargar SVG</button>
+        <button class="btn btn-green"     onclick="traceDownloadPDF()">📄 Descargar PDF con medidas</button>
       </div>
     </div>
   </div>
