@@ -239,6 +239,10 @@ input[type=file]{display:none}
           <button class="btn btn-primary"   style="font-size:12px" id="traceBtnDieline" onclick="traceRenderDieline()" disabled>📐 Generar dieline</button>
           <button class="btn btn-secondary" style="font-size:12px" onclick="traceClear()">🗑 Limpiar</button>
         </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button id="traceModeBtn" class="btn" style="font-size:11px;background:#1e293b;border:1.5px solid #6c63ff;color:#a5b4fc;padding:4px 12px;border-radius:20px" onclick="traceToggleMode()">✏️ Mano alzada</button>
+          <span style="font-size:10px;color:var(--muted)">Shift = snap 90°</span>
+        </div>
         <div id="traceHint" style="font-size:11px;color:#fbbf24;margin-top:8px;min-height:16px">Sube una foto y dibuja el contorno completo de la caja.</div>
       </div>
 
@@ -277,6 +281,37 @@ input[type=file]{display:none}
     </div>
   </div>
   <!-- ── END MANUAL TRACE CARD ── -->
+
+  <!-- ── REFERENCIA DE HOJA ── -->
+  <div class="card" id="sheetRefCard">
+    <div class="card-title">📏 Referencia de Hoja</div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Ingresa el largo y alto total de la hoja para generar un rectángulo de referencia en SVG/PDF.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="dim-group" style="flex:unset">
+        <label>Largo total (mm)</label>
+        <input type="number" id="refSheetW" placeholder="ej. 450" min="1" oninput="sheetRefUpdate()">
+      </div>
+      <div class="dim-group" style="flex:unset">
+        <label>Alto total (mm)</label>
+        <input type="number" id="refSheetH" placeholder="ej. 300" min="1" oninput="sheetRefUpdate()">
+      </div>
+      <div class="dim-group" style="flex:unset">
+        <label>Etiqueta (opcional)</label>
+        <input type="text" id="refSheetLabel" placeholder="ej. CAJA KORES" oninput="sheetRefUpdate()" style="width:140px">
+      </div>
+    </div>
+    <div id="sheetRefPreviewWrap" style="display:none;margin-top:14px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">VISTA PREVIA</div>
+      <div style="background:#fff;border-radius:8px;overflow:hidden;padding:12px;display:inline-block;max-width:100%">
+        <svg id="sheetRefSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="btn-row" style="margin-top:10px;gap:8px">
+        <button class="btn btn-secondary" style="font-size:12px" onclick="sheetRefDownloadSVG()">🖼 Descargar SVG</button>
+        <button class="btn btn-secondary" style="font-size:12px" onclick="sheetRefDownloadPDF()">📄 Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+  <!-- ── END REFERENCIA DE HOJA ── -->
 
   <div class="card">
     <div class="card-title">📐 Foto + Medidas exactas <span class="badge badge-green" id="cvBadge">OpenCV</span></div>
@@ -418,8 +453,90 @@ const TR = {
   segments: [],     // analysed segments with type labels
   drawing: false,
   hasPhoto: false,
-  imgNatW: 0, imgNatH: 0
+  imgNatW: 0, imgNatH: 0,
+  mode: 'freehand', // 'freehand' | 'straight'
+  clickPts: [],     // straight-line mode: placed vertices
+  previewPt: null,  // straight-line mode: cursor position for live preview
 };
+
+function traceToggleMode() {
+  TR.mode = TR.mode === 'freehand' ? 'straight' : 'freehand';
+  const btn = document.getElementById('traceModeBtn');
+  if (TR.mode === 'straight') {
+    btn.textContent = '📐 Líneas rectas';
+    btn.style.background = '#312e81';
+    btn.style.borderColor = '#818cf8';
+    btn.style.color = '#c7d2fe';
+    setTraceHint('Modo líneas rectas: haz clic en cada esquina. Doble clic o clic cerca del inicio para cerrar.', '#818cf8');
+  } else {
+    btn.textContent = '✏️ Mano alzada';
+    btn.style.background = '#1e293b';
+    btn.style.borderColor = '#6c63ff';
+    btn.style.color = '#a5b4fc';
+    setTraceHint('Modo mano alzada: arrastra el contorno completo de la caja.', '#fbbf24');
+  }
+  traceClearCanvas();
+  TR.clickPts = [];
+  TR.previewPt = null;
+  TR.rawPath = [];
+  TR.drawing = false;
+}
+
+function snapAngle(from, to, shiftKey) {
+  if (!shiftKey) return to;
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const angle = Math.atan2(dy, dx);
+  const snap = Math.round(angle / (Math.PI/4)) * (Math.PI/4);
+  const len = Math.hypot(dx, dy);
+  return { x: from.x + Math.cos(snap)*len, y: from.y + Math.sin(snap)*len };
+}
+
+function traceClearCanvas() {
+  const canvas = document.getElementById('traceCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function traceDrawStraightPreview() {
+  const canvas = document.getElementById('traceCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const pts = TR.clickPts;
+  if (pts.length === 0) return;
+
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#818cf8';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+
+  // Live preview line to cursor
+  if (TR.previewPt) {
+    ctx.setLineDash([5, 5]);
+    ctx.lineTo(TR.previewPt.x, TR.previewPt.y);
+    ctx.setLineDash([]);
+  }
+  ctx.stroke();
+
+  // Closing guide dashed line from cursor back to first point
+  if (TR.previewPt && pts.length > 1) {
+    ctx.beginPath();
+    ctx.setLineDash([3, 7]);
+    ctx.strokeStyle = 'rgba(129,140,248,0.35)';
+    ctx.moveTo(TR.previewPt.x, TR.previewPt.y);
+    ctx.lineTo(pts[0].x, pts[0].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Vertices
+  for (let i = 0; i < pts.length; i++) {
+    ctx.beginPath();
+    ctx.arc(pts[i].x, pts[i].y, i === 0 ? 6 : 4, 0, Math.PI*2);
+    ctx.fillStyle = i === 0 ? '#fbbf24' : '#fff';
+    ctx.fill();
+  }
+}
 
 // Ramer-Douglas-Peucker path simplification
 function rdp(pts, eps) {
@@ -450,30 +567,67 @@ function traceGetPos(evt) {
 function tracePointerDown(evt) {
   if (!TR.hasPhoto) return;
   evt.preventDefault();
+  if (TR.mode === 'straight') {
+    traceStraightClick(evt);
+    return;
+  }
   TR.drawing = true;
   TR.rawPath = [traceGetPos(evt)];
   document.getElementById('traceBtnAnalyze').disabled = true;
   setTraceHint('Dibujando… suelta para terminar el trazado.', '#60a5fa');
 }
 function tracePointerMove(evt) {
-  if (!TR.drawing) return;
   evt.preventDefault();
+  if (TR.mode === 'straight') {
+    if (TR.clickPts.length === 0) return;
+    const raw = traceGetPos(evt);
+    TR.previewPt = snapAngle(TR.clickPts[TR.clickPts.length-1], raw, evt.shiftKey);
+    traceDrawStraightPreview();
+    return;
+  }
+  if (!TR.drawing) return;
   const p = traceGetPos(evt);
   TR.rawPath.push(p);
   traceDrawRaw();
 }
 function tracePointerUp(evt) {
+  if (TR.mode === 'straight') return;
   if (!TR.drawing) return;
   TR.drawing = false;
   if (TR.rawPath.length < 5) { setTraceHint('Trazado muy corto. Intenta de nuevo.', '#ef4444'); return; }
-  // Close path: add first point at end
   TR.rawPath.push({ ...TR.rawPath[0] });
   const zone = document.getElementById('traceZone');
-  const eps = Math.max(zone.offsetWidth, zone.offsetHeight) * 0.012; // ~1.2% of canvas
+  const eps = Math.max(zone.offsetWidth, zone.offsetHeight) * 0.012;
   TR.simplPoly = rdp(TR.rawPath, eps);
   traceDrawSimplified();
   document.getElementById('traceBtnAnalyze').disabled = false;
   setTraceHint(`✓ Trazado listo — ${TR.simplPoly.length} vértices. Pulsa "Analizar trazado".`, '#43e97b');
+}
+
+function traceStraightClick(evt) {
+  const raw = traceGetPos(evt);
+  const pts = TR.clickPts;
+  const p = pts.length > 0 ? snapAngle(pts[pts.length-1], raw, evt.shiftKey) : raw;
+
+  // Close polygon if clicking near the first point (within 18px) or double-click
+  if (pts.length >= 3) {
+    const d = Math.hypot(p.x - pts[0].x, p.y - pts[0].y);
+    if (d < 18 || evt.detail >= 2) {
+      pts.push({ ...pts[0] }); // close
+      TR.simplPoly = [...pts];
+      TR.previewPt = null;
+      traceDrawSimplified();
+      document.getElementById('traceBtnAnalyze').disabled = false;
+      setTraceHint(`✓ Figura cerrada — ${TR.simplPoly.length - 1} vértices. Pulsa "Analizar trazado".`, '#43e97b');
+      return;
+    }
+  }
+
+  pts.push(p);
+  TR.previewPt = p;
+  traceDrawStraightPreview();
+  const n = pts.length;
+  setTraceHint(`${n} punto${n>1?'s':''} colocado${n>1?'s':''}. Haz clic en la siguiente esquina. Shift = línea recta perfecta. Doble clic o vuelve al inicio para cerrar.`, '#818cf8');
 }
 
 function traceDrawRaw() {
@@ -898,6 +1052,102 @@ function traceDownloadSVG() {
 }
 // ── END DIELINE FROM TRACE ─────────────────────────────────────────
 
+// ── REFERENCIA DE HOJA ─────────────────────────────────────────────
+function sheetRefUpdate() {
+  const W = parseFloat(document.getElementById('refSheetW').value) || 0;
+  const H = parseFloat(document.getElementById('refSheetH').value) || 0;
+  const label = document.getElementById('refSheetLabel').value.trim();
+  const wrap = document.getElementById('sheetRefPreviewWrap');
+  if (W < 1 || H < 1) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'block';
+  const MAX = 500; // preview max px
+  const scale = Math.min(MAX / W, MAX / H, 1.5);
+  const sw = Math.round(W * scale), sh = Math.round(H * scale);
+
+  const svg = document.getElementById('sheetRefSvg');
+  svg.setAttribute('width', sw);
+  svg.setAttribute('height', sh);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  svg.innerHTML = `
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#f8fafc" stroke="#1e293b" stroke-width="1.5"/>
+    <!-- crosshair center -->
+    <line x1="${W/2}" y1="0" x2="${W/2}" y2="${H}" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="4,4"/>
+    <line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="4,4"/>
+    <!-- dimension arrows W -->
+    <line x1="0" y1="${H+8}" x2="${W}" y2="${H+8}" stroke="#2563eb" stroke-width="0.8" marker-end="url(#arr)" marker-start="url(#arrR)"/>
+    <text x="${W/2}" y="${H+16}" text-anchor="middle" font-size="9" fill="#2563eb" font-family="sans-serif">${W} mm</text>
+    <!-- dimension arrows H -->
+    <line x1="${W+8}" y1="0" x2="${W+8}" y2="${H}" stroke="#2563eb" stroke-width="0.8" marker-end="url(#arr)" marker-start="url(#arrR)"/>
+    <text x="${W+18}" y="${H/2}" text-anchor="start" font-size="9" fill="#2563eb" font-family="sans-serif" dominant-baseline="middle">${H} mm</text>
+    ${label ? `<text x="${W/2}" y="${H/2}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(8, Math.min(20, W/10))}" fill="#64748b" font-family="sans-serif" opacity="0.5">${label}</text>` : ''}
+    <defs>
+      <marker id="arr"  markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/></marker>
+      <marker id="arrR" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse"><path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/></marker>
+    </defs>
+  `;
+}
+
+function sheetRefSvgFull() {
+  const W = parseFloat(document.getElementById('refSheetW').value) || 0;
+  const H = parseFloat(document.getElementById('refSheetH').value) || 0;
+  const label = document.getElementById('refSheetLabel').value.trim();
+  if (W < 1 || H < 1) return null;
+  const margin = 24;
+  const tw = W + margin * 2, th = H + margin * 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${tw}mm" height="${th}mm" viewBox="0 0 ${tw} ${th}">
+    <rect x="${margin}" y="${margin}" width="${W}" height="${H}" fill="none" stroke="#000" stroke-width="0.5"/>
+    <line x1="${margin}" y1="${margin+H/2}" x2="${margin+W}" y2="${margin+H/2}" stroke="#ccc" stroke-width="0.3" stroke-dasharray="3,3"/>
+    <line x1="${margin+W/2}" y1="${margin}" x2="${margin+W/2}" y2="${margin+H}" stroke="#ccc" stroke-width="0.3" stroke-dasharray="3,3"/>
+    <line x1="${margin}" y1="${margin+H+6}" x2="${margin+W}" y2="${margin+H+6}" stroke="#2563eb" stroke-width="0.5"/>
+    <text x="${margin+W/2}" y="${margin+H+13}" text-anchor="middle" font-size="6" fill="#2563eb" font-family="Arial,sans-serif">${W} mm</text>
+    <line x1="${margin+W+6}" y1="${margin}" x2="${margin+W+6}" y2="${margin+H}" stroke="#2563eb" stroke-width="0.5"/>
+    <text x="${margin+W+14}" y="${margin+H/2}" text-anchor="start" dominant-baseline="middle" font-size="6" fill="#2563eb" font-family="Arial,sans-serif">${H} mm</text>
+    ${label ? `<text x="${margin+W/2}" y="${margin+H/2}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(5,Math.min(18,W/12))}" fill="#94a3b8" font-family="Arial,sans-serif" opacity="0.6">${label}</text>` : ''}
+  </svg>`;
+}
+
+function sheetRefDownloadSVG() {
+  const svgStr = sheetRefSvgFull();
+  if (!svgStr) return;
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml'})),
+    download: 'referencia-hoja.svg'
+  });
+  a.click();
+}
+
+function sheetRefDownloadPDF() {
+  const W = parseFloat(document.getElementById('refSheetW').value) || 0;
+  const H = parseFloat(document.getElementById('refSheetH').value) || 0;
+  const label = document.getElementById('refSheetLabel').value.trim() || 'Hoja';
+  if (W < 1 || H < 1) return;
+  const svgStr = sheetRefSvgFull();
+  const img = new Image();
+  const margin = 24;
+  const tw = W + margin*2, th = H + margin*2;
+  const dpi = 3.7795; // px per mm at 96dpi
+  const cw = Math.round(tw * dpi), ch = Math.round(th * dpi);
+  img.onload = () => {
+    const canvas = Object.assign(document.createElement('canvas'), {width: cw, height: ch});
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cw,ch);
+    ctx.drawImage(img, 0, 0, cw, ch);
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>${label}</title>
+      <style>body{margin:0;padding:0} img{display:block;max-width:100%} @media print{@page{margin:0}}</style>
+      </head><body>
+      <img src="${canvas.toDataURL('image/png')}">
+      <script>window.onload=function(){window.print();}<\/script>
+      </body></html>`);
+    win.document.close();
+  };
+  const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+  img.src = URL.createObjectURL(blob);
+}
+// ── END REFERENCIA DE HOJA ─────────────────────────────────────────
+
 function onTracePhoto(evt) {
   const file = evt.target.files[0];
   if (!file) return;
@@ -935,6 +1185,7 @@ function traceInitCanvas() {
 
 function traceClear() {
   TR.rawPath = []; TR.simplPoly = []; TR.segments = []; TR.segs = []; TR.drawing = false;
+  TR.clickPts = []; TR.previewPt = null;
   const canvas = document.getElementById('traceCanvas');
   if (canvas.getContext) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   document.getElementById('traceSegInfo').style.display = 'none';
